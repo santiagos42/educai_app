@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { BookOpen, FileText, Cpu, Download, CheckCircle, BrainCircuit, Sparkles, Loader, FilePlus, ChevronLeft, ArrowRight, FlaskConical, Atom, Lightbulb, Check, ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette, Dna } from 'lucide-react';
+import { BookOpen, FileText, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette, Clipboard, Copy } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
 // Pacotes para download de arquivos
@@ -10,6 +10,33 @@ import jsPDF from 'jspdf';
 // =================================================================================
 // Componentes de UI e Layout
 // =================================================================================
+
+// Componente reutilizável para o botão de cópia
+const CopyButton = ({ textToCopy, title = "Copiar conteúdo" }) => {
+  const handleCopy = () => {
+    // Se o textToCopy for uma função, a executa para obter o texto.
+    const finalText = typeof textToCopy === 'function' ? textToCopy() : textToCopy;
+    
+    if (!finalText) {
+      toast.error('Não há conteúdo para copiar.');
+      return;
+    }
+    navigator.clipboard.writeText(finalText)
+      .then(() => {
+        toast.success('Copiado para a área de transferência!');
+      })
+      .catch(err => {
+        console.error('Falha ao copiar texto: ', err);
+        toast.error('Não foi possível copiar o texto.');
+      });
+  };
+
+  return (
+    <button onClick={handleCopy} className="copy-button" title={title}>
+      <Copy size={16} />
+    </button>
+  );
+};
 
 const useTypingEffect = (text, speed = 50) => {
   const [displayedText, setDisplayedText] = useState('');
@@ -83,7 +110,7 @@ const AnimatedBackground = () => {
 // =================================================================================
 
 const WhiteboardHomeScreen = ({ setView }) => {
-  const typedSubtitle = ("Sua assistente de IA para revolucionar a educação");
+  const typedSubtitle = ("Sua assistente de IA para revolucionar a educação.");
   const features = [
     { id: 'activityGenerator', icon: <PenSquare />, title: "Gerar Atividades Avaliativas", description: "Crie avaliações, exercícios, questões discursivas e mais." },
     { id: 'planningAssistant', icon: <CalendarDays />, title: "Planejamento de Aulas", description: "Organize seu bimestre distribuindo aulas e avaliações.", isHighlighted: true },
@@ -191,22 +218,12 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
     const loadingToastId = toast.loading('Gerando seu conteúdo... Por favor, aguarde.');
 
     try {
-      // ===============================================================
-      // INÍCIO DA LÓGICA DE URL DINÂMICA
-      // ===============================================================
       let apiUrl;
-
-      // NODE_ENV é uma variável padrão que diferencia os ambientes.
       if (process.env.NODE_ENV === 'production') {
-        // Na Vercel (produção), usamos o caminho relativo.
         apiUrl = '/api/generate';
       } else {
-        // No seu PC (desenvolvimento), usamos a URL completa do seu servidor proxy local.
         apiUrl = 'http://localhost:3001/api/generate';
       }
-      // ===============================================================
-      // FIM DA LÓGICA DE URL DINÂMICA
-      // ===============================================================
 
       const payload = {
         type,
@@ -392,7 +409,9 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
   const [modalInfo, setModalInfo] = useState(null);
 
   useEffect(() => {
-    setEditableResult(JSON.parse(JSON.stringify(result)));
+    if (result) {
+      setEditableResult(JSON.parse(JSON.stringify(result)));
+    }
   }, [result]);
   
   const openGeneratorModal = (info) => {
@@ -401,6 +420,7 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
   const closeGeneratorModal = () => setModalInfo(null);
 
   const homeView = useMemo(() => {
+    if (!result) return 'home';
     const viewMap = {
         presentation: 'presentationGenerator',
         activity: 'activityGenerator',
@@ -410,7 +430,7 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
         summary: 'summaryGenerator',
     };
     return viewMap[result.type] || 'home';
-  }, [result.type]);
+  }, [result]);
 
   const handleContentChange = (path, value) => {
     setEditableResult(prevResult => {
@@ -1117,7 +1137,7 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
 };
 
 // =================================================================================
-// Componentes de Conteúdo Editáveis
+// Componentes de Conteúdo Editáveis (COM BOTÕES DE CÓPIA)
 // =================================================================================
 const Editable = ({ path, children, onContentChange, as = 'p', className = '' }) => {
   const handleBlur = (e) => {
@@ -1138,30 +1158,40 @@ const Editable = ({ path, children, onContentChange, as = 'p', className = '' })
   );
 };
 
-const PresentationContent = ({ result, onContentChange }) => (
-  <div className="p-8 document-font">
-    <div className="text-center mb-6">
-      <Editable path={['topic']} as="h2" className="text-2xl font-bold" onContentChange={onContentChange}>{result.topic}</Editable>
-    </div>
-    <div className="presentation-grid">
-      {(result.slides || []).map((slide, index) => (
-        <div key={index} className="slide-preview">
-          <div className="slide-header">
-            <span className="slide-number">{index + 1}</span>
-            <Editable path={['slides', index, 'title']} onContentChange={onContentChange} as="h3" className="slide-title">{slide.title}</Editable>
+const PresentationContent = ({ result, onContentChange }) => {
+  const formatSlideContentForCopy = (slide) => {
+    const title = slide.title || '';
+    const contentPoints = slide.content || [];
+    return `${title}\n\n${contentPoints.map(point => `• ${point}`).join('\n')}`;
+  };
+
+  return (
+    <div className="p-8 document-font">
+      <div className="content-header-with-copy">
+        <Editable path={['topic']} as="h2" className="text-2xl font-bold text-center mb-6" onContentChange={onContentChange}>{result.topic}</Editable>
+        <CopyButton textToCopy={() => (result.slides || []).map(formatSlideContentForCopy).join('\n\n\n')} title="Copiar todos os slides" />
+      </div>
+      <div className="presentation-grid">
+        {(result.slides || []).map((slide, index) => (
+          <div key={index} className="slide-preview">
+            <div className="slide-header">
+              <span className="slide-number">{index + 1}</span>
+              <Editable path={['slides', index, 'title']} onContentChange={onContentChange} as="h3" className="slide-title">{slide.title}</Editable>
+              <CopyButton textToCopy={formatSlideContentForCopy(slide)} title="Copiar conteúdo do slide" />
+            </div>
+            <ul className="slide-content">
+              {(slide.content || []).map((point, i) => 
+                <li key={i}>
+                  <Editable path={['slides', index, 'content', i]} onContentChange={onContentChange} as="span">{point}</Editable>
+                </li>
+              )}
+            </ul>
           </div>
-          <ul className="slide-content">
-            {(slide.content || []).map((point, i) => 
-              <li key={i}>
-                <Editable path={['slides', index, 'content', i]} onContentChange={onContentChange} as="span">{point}</Editable>
-              </li>
-            )}
-          </ul>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const SchoolHeader = ({ headerRef }) => {
   const headerHTML = `
@@ -1210,7 +1240,6 @@ const SummaryContent = ({ result, onContentChange, headerRef }) => {
   const handleContentUpdate = useCallback(() => {
     const titleHTML = titleRef.current ? titleRef.current.innerHTML : '';
     const bodyHTML = bodyRef.current ? bodyRef.current.innerHTML : '';
-    
     const newContent = `<h2>${titleHTML}</h2>${bodyHTML}`;
     onContentChange(['content'], newContent);
   }, [onContentChange]);
@@ -1222,23 +1251,32 @@ const SummaryContent = ({ result, onContentChange, headerRef }) => {
     let title = 'Título do Resumo';
     if (h2) {
       title = h2.innerHTML;
-      h2.remove(); 
+      h2.remove();
     }
     const body = tempDiv.innerHTML;
     return [title, body];
   }, [result.content]);
 
+  const getTextToCopy = () => {
+    const titleText = titleRef.current ? titleRef.current.innerText : '';
+    const bodyText = bodyRef.current ? bodyRef.current.innerText : '';
+    return `${titleText}\n\n${bodyText}`;
+  };
+
   return (
     <div className="p-8 document-font">
       <SchoolHeader headerRef={headerRef} />
-      <h2 
-        ref={titleRef}
-        className="editable-content text-2xl font-bold text-center mb-6"
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={handleContentUpdate}
-        dangerouslySetInnerHTML={{ __html: initialTitle }}
-      />
+      <div className="content-header-with-copy">
+        <h2 
+          ref={titleRef}
+          className="editable-content text-2xl font-bold text-center mb-6"
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={handleContentUpdate}
+          dangerouslySetInnerHTML={{ __html: initialTitle }}
+        />
+        <CopyButton textToCopy={getTextToCopy} title="Copiar resumo completo" />
+      </div>
       <div className="two-column-layout">
          <div
           ref={bodyRef}
@@ -1253,55 +1291,106 @@ const SummaryContent = ({ result, onContentChange, headerRef }) => {
   );
 };
 
+const ActivityContent = ({ result, onContentChange, headerRef }) => {
+  const getTextToCopy = () => {
+    if (!result.questions || result.questions.length === 0) return "";
+    
+    return result.questions.map((q, index) => {
+      let questionText = `${index + 1}. ${q.statement}`;
+      if (q.options && q.options.length > 0) {
+        const optionsText = q.options.map((opt, i) => `   ${'abcde'[i]}) ${opt}`).join('\n');
+        questionText += `\n${optionsText}`;
+      }
+      return questionText;
+    }).join('\n\n');
+  };
 
-const ActivityContent = ({ result, onContentChange, headerRef }) => (
-  <div className="p-8 document-font">
-    <SchoolHeader headerRef={headerRef} />
-    <div className="two-column-layout">
-    {(result.questions || []).map((q, index) => (
-      <div key={index} className="mb-6 question-block">
-        <Editable path={['questions', index, 'statement']} onContentChange={onContentChange} as="p" className="font-bold">
-          {`${index + 1}. ${q.statement}`}
-        </Editable>
-
-        {['enem', 'quiz'].includes(q.type) && (
-          <ul className="list-none mt-2 pl-4 space-y-1">
-            {(q.options || []).map((opt, i) => 
-              <li key={i}>
-                {`${'abcde'[i]}) `}<Editable path={['questions', index, 'options', i]} onContentChange={onContentChange} as="span">{opt}</Editable>
-              </li>
-            )}
-          </ul>
-        )}
-        {q.type === 'true-false' && <div className="mt-2 pl-4"><p>( ) Verdadeiro ( ) Falso</p></div>}
-        {q.type === 'discursive' && <div className="mt-3 h-24 border-b border-gray-400"></div>}
+  return (
+    <div className="p-8 document-font">
+      <SchoolHeader headerRef={headerRef} />
+      <div className="content-header-with-copy">
+        <h2 className="text-2xl font-bold text-center mb-6">Atividade Avaliativa</h2>
+        <CopyButton textToCopy={getTextToCopy} title="Copiar todas as questões" />
       </div>
-    ))}
-    </div>
-  </div>
-);
+      <div className="two-column-layout">
+        {(result.questions || []).map((q, index) => (
+          <div key={index} className="mb-6 question-block">
+            <Editable path={['questions', index, 'statement']} onContentChange={onContentChange} as="p" className="font-bold">
+              {`${index + 1}. ${q.statement}`}
+            </Editable>
 
-const LessonPlanContent = ({ result, onContentChange }) => (
-  <div className="p-8 document-font">
-    <Editable path={['topic']} as="h2" className="text-2xl font-bold text-center mb-2" onContentChange={onContentChange}>{result.topic}</Editable>
-    <Editable path={['grade']} as="p" className="text-center mb-6" onContentChange={onContentChange}>{result.grade}</Editable>
-    <div className="space-y-4">
-      <div><h3 className="section-title">Objetivos</h3><ul className="list-disc pl-5">{(result.plan.objectives || []).map((o, i) => <li key={i}><Editable path={['plan', 'objectives', i]} onContentChange={onContentChange} as="span">{o}</Editable></li>)}</ul></div>
-      <div><h3 className="section-title">Habilidades (BNCC)</h3><ul className="list-disc pl-5">{(result.plan.bnccSkills || []).map((s, i) => <li key={i}><Editable path={['plan', 'bnccSkills', i]} onContentChange={onContentChange} as="span">{s}</Editable></li>)}</ul></div>
-      <div><h3 className="section-title">Desenvolvimento</h3><ol className="list-decimal pl-5">{(result.plan.development || []).map((d, i) => <li key={i}><Editable path={['plan', 'development', i]} onContentChange={onContentChange} as="span">{d}</Editable></li>)}</ol></div>
-      <div><h3 className="section-title">Recursos</h3><ul className="list-disc pl-5">{(result.plan.resources || []).map((r, i) => <li key={i}><Editable path={['plan', 'resources', i]} onContentChange={onContentChange} as="span">{r}</Editable></li>)}</ul></div>
-      <div><h3 className="section-title">Avaliação</h3><ul className="list-disc pl-5">{(result.plan.assessment || []).map((a, i) => <li key={i}><Editable path={['plan', 'assessment', i]} onContentChange={onContentChange} as="span">{a}</Editable></li>)}</ul></div>
+            {['enem', 'quiz'].includes(q.type) && (
+              <ul className="list-none mt-2 pl-4 space-y-1">
+                {(q.options || []).map((opt, i) => 
+                  <li key={i}>
+                    {`${'abcde'[i]}) `}<Editable path={['questions', index, 'options', i]} onContentChange={onContentChange} as="span">{opt}</Editable>
+                  </li>
+                )}
+              </ul>
+            )}
+            {q.type === 'true-false' && <div className="mt-2 pl-4"><p>( ) Verdadeiro ( ) Falso</p></div>}
+            {q.type === 'discursive' && <div className="mt-3 h-24 border-b border-gray-400"></div>}
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
+const LessonPlanContent = ({ result, onContentChange }) => {
+  const getTextToCopy = () => {
+    if (!result || !result.plan) return "";
+
+    const { plan, topic, grade } = result;
+    const sections = [
+      `Plano de Aula: ${topic}`,
+      `Série/Nível: ${grade}`,
+      '',
+      'Objetivos:',
+      ...(plan.objectives || []).map(o => `• ${o}`),
+      '',
+      'Habilidades (BNCC):',
+      ...(plan.bnccSkills || []).map(s => `• ${s}`),
+      '',
+      'Desenvolvimento:',
+      ...(plan.development || []).map((d, i) => `${i + 1}. ${d}`),
+      '',
+      'Recursos:',
+      ...(plan.resources || []).map(r => `• ${r}`),
+      '',
+      'Avaliação:',
+      ...(plan.assessment || []).map(a => `• ${a}`),
+    ];
+    return sections.join('\n');
+  };
+
+  return (
+    <div className="p-8 document-font">
+      <div className="content-header-with-copy">
+        <Editable path={['topic']} as="h2" className="text-2xl font-bold text-center mb-2" onContentChange={onContentChange}>{result.topic}</Editable>
+        <CopyButton textToCopy={getTextToCopy} title="Copiar plano de aula" />
+      </div>
+      <Editable path={['grade']} as="p" className="text-center mb-6" onContentChange={onContentChange}>{result.grade}</Editable>
+      <div className="space-y-4">
+        <div><h3 className="section-title">Objetivos</h3><ul className="list-disc pl-5">{(result.plan.objectives || []).map((o, i) => <li key={i}><Editable path={['plan', 'objectives', i]} onContentChange={onContentChange} as="span">{o}</Editable></li>)}</ul></div>
+        <div><h3 className="section-title">Habilidades (BNCC)</h3><ul className="list-disc pl-5">{(result.plan.bnccSkills || []).map((s, i) => <li key={i}><Editable path={['plan', 'bnccSkills', i]} onContentChange={onContentChange} as="span">{s}</Editable></li>)}</ul></div>
+        <div><h3 className="section-title">Desenvolvimento</h3><ol className="list-decimal pl-5">{(result.plan.development || []).map((d, i) => <li key={i}><Editable path={['plan', 'development', i]} onContentChange={onContentChange} as="span">{d}</Editable></li>)}</ol></div>
+        <div><h3 className="section-title">Recursos</h3><ul className="list-disc pl-5">{(result.plan.resources || []).map((r, i) => <li key={i}><Editable path={['plan', 'resources', i]} onContentChange={onContentChange} as="span">{r}</Editable></li>)}</ul></div>
+        <div><h3 className="section-title">Avaliação</h3><ul className="list-disc pl-5">{(result.plan.assessment || []).map((a, i) => <li key={i}><Editable path={['plan', 'assessment', i]} onContentChange={onContentChange} as="span">{a}</Editable></li>)}</ul></div>
+      </div>
+    </div>
+  );
+};
 
 const PlanningContent = ({ result, onContentChange, onOpenModal }) => (
   <div className="p-8 document-font">
-    <div className="text-center mb-8">
-      <Editable path={['className']} as="h2" className="text-2xl font-bold" onContentChange={onContentChange}>{`Planejamento - ${result.className}`}</Editable>
-      <Editable path={['teacherName']} as="p" className="text-lg" onContentChange={onContentChange}>{`Prof(a): ${result.teacherName || 'A ser preenchido'} | Disciplina: ${result.discipline}`}</Editable>
-      <p className="text-sm mt-2 text-gray-600"><strong>Assuntos:</strong> {result.subjects}</p>
+    <div className="content-header-with-copy">
+        <Editable path={['className']} as="h2" className="text-2xl font-bold text-center" onContentChange={onContentChange}>{`Planejamento - ${result.className}`}</Editable>
+        <CopyButton textToCopy={() => (result.schedule || []).map(item => `${item.date}: ${item.activity}`).join('\n')} title="Copiar cronograma" />
     </div>
+    <Editable path={['teacherName']} as="p" className="text-lg text-center" onContentChange={onContentChange}>{`Prof(a): ${result.teacherName || 'A ser preenchido'} | Disciplina: ${result.discipline}`}</Editable>
+    <p className="text-sm mt-2 text-center text-gray-600 mb-8"><strong>Assuntos:</strong> {result.subjects}</p>
+    
     <div className="space-y-3">
       {(result.schedule || []).map((item, index) => (
         <p key={index} className="break-inside-avoid">
@@ -1348,28 +1437,53 @@ const PlanningContent = ({ result, onContentChange, onOpenModal }) => (
   </div>
 );
 
-const CaseStudyContent = ({ result, onContentChange }) => (
-  <div className="p-8 document-font">
-    <Editable path={['case', 'title']} as="h2" className="text-2xl font-bold text-center mb-2" onContentChange={onContentChange}>{result.case.title}</Editable>
-    <p className="text-center text-gray-600 mb-6">Estudo de Caso: {result.topic} ({result.grade})</p>
-    <div className="space-y-4">
-      <div><h3 className="section-title">Contexto</h3><Editable path={['case', 'context']} as="p" onContentChange={onContentChange}>{result.case.context}</Editable></div>
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg"><h3 className="font-bold text-red-800 mb-1">Problema Central</h3><Editable path={['case', 'problem']} as="p" className="text-red-900" onContentChange={onContentChange}>{result.case.problem}</Editable></div>
-      <div>
-        <h3 className="section-title">Questões para Discussão</h3>
-        <ol className="list-decimal pl-5">
-          {(result.case.discussion_points || []).map((point, i) => (
-            <li key={i}>
-              <Editable path={['case', 'discussion_points', i, 'question']} as="span" onContentChange={onContentChange}>
-                {point.question}
-              </Editable>
-            </li>
-          ))}
-        </ol>
+const CaseStudyContent = ({ result, onContentChange }) => {
+  const getTextToCopy = () => {
+    if (!result || !result.case) return "";
+
+    const { case: caseData, topic, grade } = result;
+    const sections = [
+      `Estudo de Caso: ${caseData.title || topic}`,
+      `Série/Nível: ${grade}`,
+      '',
+      'Contexto:',
+      caseData.context || '',
+      '',
+      'Problema Central:',
+      caseData.problem || '',
+      '',
+      'Questões para Discussão:',
+      ...(caseData.discussion_points || []).map((p, i) => `${i + 1}. ${p.question}`),
+    ];
+    return sections.join('\n\n');
+  };
+
+  return (
+    <div className="p-8 document-font">
+      <div className="content-header-with-copy">
+        <Editable path={['case', 'title']} as="h2" className="text-2xl font-bold text-center mb-2" onContentChange={onContentChange}>{result.case.title}</Editable>
+        <CopyButton textToCopy={getTextToCopy} title="Copiar estudo de caso" />
+      </div>
+      <p className="text-center text-gray-600 mb-6">Estudo de Caso: {result.topic} ({result.grade})</p>
+      <div className="space-y-4">
+        <div><h3 className="section-title">Contexto</h3><Editable path={['case', 'context']} as="p" onContentChange={onContentChange}>{result.case.context}</Editable></div>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg"><h3 className="font-bold text-red-800 mb-1">Problema Central</h3><Editable path={['case', 'problem']} as="p" className="text-red-900" onContentChange={onContentChange}>{result.case.problem}</Editable></div>
+        <div>
+          <h3 className="section-title">Questões para Discussão</h3>
+          <ol className="list-decimal pl-5">
+            {(result.case.discussion_points || []).map((point, i) => (
+              <li key={i}>
+                <Editable path={['case', 'discussion_points', i, 'question']} as="span" onContentChange={onContentChange}>
+                  {point.question}
+                </Editable>
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const QuestionTypeSelector = ({ selectedTypes, setSelectedTypes }) => {
   const questionOptions = {
@@ -1481,7 +1595,7 @@ export default function App() {
         position="top-center"
         reverseOrder={false}
         toastOptions={{
-          duration: 5000,
+          duration: 3000,
           style: {
             background: '#363636',
             color: '#fff',
@@ -1570,6 +1684,48 @@ export default function App() {
         .sug-button { display: inline-flex; align-items: center; background-color: #e2e8f0; color: #334155; font-size: 0.8rem; font-weight: 600; padding: 0.3rem 0.6rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
         .sug-button:hover { background-color: #cbd5e1; border-color: #94a3b8; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
+        .copy-button {
+          margin-left: 0.5rem;
+          padding: 0.3rem;
+          border-radius: 9999px;
+          color: #64748b;
+          background-color: transparent;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s ease-in-out;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .copy-button:hover {
+          color: #1e293b;
+          background-color: #e2e8f0;
+          transform: scale(1.1);
+        }
+
+        .slide-header .copy-button {
+          margin-left: auto;
+        }
+
+        .content-header-with-copy {
+          position: relative;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 0 2rem; /* Adiciona espaço para o botão não sobrepor o título */
+        }
+        
+        .content-header-with-copy h2 {
+            flex-grow: 1;
+        }
+
+        .content-header-with-copy .copy-button {
+          position: absolute;
+          right: 0;
+          top: 50%;
+          transform: translateY(-50%);
+        }
       `}</style>
       <main>{renderView()}</main>
     </>
