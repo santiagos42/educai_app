@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { BookOpen, FileText, Cpu, Download, CheckCircle, BrainCircuit, Sparkles, Loader, FilePlus, ChevronLeft, ArrowRight, FlaskConical, Atom, Lightbulb, Check, ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette, Dna } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
-// Pacotes para download de arquivos, importados localmente
+// Pacotes para download de arquivos
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableCell, TableRow, WidthType } from 'docx';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
@@ -82,7 +83,7 @@ const AnimatedBackground = () => {
 // =================================================================================
 
 const WhiteboardHomeScreen = ({ setView }) => {
-  const typedSubtitle = useTypingEffect("        Sua assistente de IA para revolucionar a educação.", 50);
+  const typedSubtitle = ("Sua assistente de IA para revolucionar a educação");
   const features = [
     { id: 'activityGenerator', icon: <PenSquare />, title: "Gerar Atividades Avaliativas", description: "Crie avaliações, exercícios, questões discursivas e mais." },
     { id: 'planningAssistant', icon: <CalendarDays />, title: "Planejamento de Aulas", description: "Organize seu bimestre distribuindo aulas e avaliações.", isHighlighted: true },
@@ -152,9 +153,8 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
   const [className, setClassName] = useState('');
   const [teacherName, setTeacherName] = useState('');
   const [discipline, setDiscipline] = useState('');
-  const [weekdays, setWeekdays] = useState([1, 3, 5]); // Mon, Wed, Fri
+  const [weekdays, setWeekdays] = useState([1, 3, 5]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [questionTypes, setQuestionTypes] = useState(['enem']);
   const [presentationStyle, setPresentationStyle] = useState('didatico');
 
@@ -179,54 +179,35 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
 
     if (type === 'planningAssistant') {
       if (!className || !subjects || !discipline || !startDate || !endDate || weekdays.length === 0) { 
-        setError('Preencha todos os campos: Turma, Disciplina, Assuntos, Datas e Dias de Aula.'); 
+        toast.error('Preencha todos os campos obrigatórios.');
         return; 
       }
     } else if (!topic) {
-      setError('Preencha o campo de tópico/tema.'); return;
+      toast.error('Por favor, preencha o campo de tópico/tema.');
+      return;
     }
     
     setIsLoading(true);
-    setError('');
-
-    let prompt;
-    let generationConfig = { response_mime_type: "application/json" };
-
-    switch(type) {
-      case 'activity':
-        const instructions = {
-          enem: "Para questões 'enem', elabore um enunciado com um texto-base (contexto). A pergunta deve exigir interpretação, raciocínio crítico ou aplicação de conhecimento interdisciplinar. Crie 4 alternativas (a, b, c, d), sendo uma correta e três distratores verossímeis. A justificativa deve explicar por que a alternativa correta responde ao enunciado.",
-          quiz: "Para questões 'quiz', crie uma pergunta direta e objetiva para verificação rápida de conhecimento. Deve ter 4 alternativas de múltipla escolha. A pergunta deve ser clara e sem ambiguidades.",
-          discursive: "Para questões 'discursive', formule um problema ou uma pergunta aberta que exija do aluno uma resposta escrita, bem estruturada e fundamentada. A questão deve estimular a análise, comparação, argumentação ou síntese de informações sobre o tema.",
-          'true-false': "Para questões 'true-false', crie uma afirmação clara e inequívoca sobre o tópico. O aluno deverá julgá-la como verdadeira ou falsa. A justificativa é crucial e deve explicar detalhadamente por que a afirmação é verdadeira ou falsa, corrigindo a informação se for o caso."
-        };
-        const detailedInstructions = questionTypes.map(type => instructions[type]).join(' ');
-        prompt = `Como um especialista em elaboração de material didático, crie uma atividade avaliativa sobre "${topic}" para a série "${grade}", contendo exatamente ${pages * 8} questões no total, distribuídas entre os seguintes tipos: ${questionTypes.join(', ')}. Siga RIGOROSAMENTE estas instruções para cada tipo de questão: ${detailedInstructions} A resposta DEVE ser um único objeto JSON, contendo apenas uma chave principal "questions". O valor dessa chave deve ser um array de objetos, onde cada objeto representa uma questão e possui as seguintes chaves: "type" (string: 'enem', 'quiz', 'discursive', ou 'true-false'), "statement" (string com o enunciado completo), "options" (um array de strings com as alternativas, obrigatório para 'enem' e 'quiz'), "answer" (o índice da resposta correta para 'enem' e 'quiz', ou um booleano para 'true-false'), e "justification" (uma string com a explicação detalhada da resposta).`;
-        break;
-      case 'lessonPlan':
-        prompt = `Você é um professor brasileiro especialista em criar planos de aula. Crie um plano de aula detalhado sobre "${topic}" para "${grade}", alinhado à Base Nacional Comum Curricular (BNCC) e ao Currículo de Referência do Estado de Minas Gerais de 2025 (CRMG 2025) - com cuidado para não trazer informações incorretas; caso não tenha absoluta certeza da identificação de uma determinada habilidade da BNCC, não a coloque. Considere que cada aula possui 50 minutos, e, se necessário, faça o plano considerando duas aulas, caso o tema seja grande. Não utilize ** no texto. A resposta DEVE ser um único objeto JSON com as chaves: "objectives", "bnccSkills", "development", "resources", "assessment" (todos como arrays de strings).`;
-        break;
-      case 'planningAssistant':
-        const weekdayNames = weekdays.map(d => ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][d]).join(', ');
-        prompt = `Como um especialista em planejamento educacional, crie um cronograma de aulas detalhado para a disciplina de "${discipline}" para a turma "${className}", ministrado por "${teacherName || 'Professor(a)'}". O período do cronograma é de ${startDate} a ${endDate}, com aulas ocorrendo especificamente nos seguintes dias da semana: ${weekdayNames}. Os tópicos a serem cobertos são: "${subjects}". Sua tarefa é distribuir esses tópicos de forma lógica ao longo do período, criando um cronograma que intercale aulas expositivas, aulas de exercícios e avaliações. A resposta DEVE ser um único objeto JSON contendo uma chave principal "schedule". O valor dessa chave deve ser um array de objetos, onde cada objeto representa um dia de aula e possui as seguintes chaves: "date" (uma string com a data no formato "DD/MM/YYYY") e "activity" (uma string descrevendo o plano para aquele dia, incluindo o tópico principal). Não inclua dias sem aula no cronograma.`;
-        break;
-      case 'caseStudy':
-        prompt = `Você é um professor especialista em criar estudos de casos otimizados para o ensino de estudantes. Crie um estudo de caso sobre "${topic}" para a disciplina de "${discipline}" (${grade}). A resposta DEVE ser um único objeto JSON com chaves: "title", "context", "problem", e "discussion_points". A chave "discussion_points" deve ser um array de objetos, onde cada objeto tem as chaves "question" (string) e "answer" (string com a resposta ou pontos esperados para discussão).`;
-        break;
-      case 'presentation':
-        prompt = `Você é um professor especialista em criar apresentações de slides para alunos. Crie o conteúdo para uma apresentação de slides sobre "${topic}" para "${grade}", com um tom ${presentationStyle}. Certifique-se de que exista uma estética chamativa, rica em cores e em destaques. A resposta DEVE ser um único objeto JSON com a chave "slides", um array de objetos. Cada objeto deve ter chaves "title" (string) e "content" (array de strings para os bullet points). Gere de 5 a 7 slides.`;
-        break;
-      default: // summary
-        generationConfig = {}; 
-        prompt = `Você é um professor especialista em criar resumos didáticos sobre várias áreas do conhecimento. Crie um resumo didático e bem estruturado sobre o tema '${topic}', com aproximadamente ${pages * 500} palavras. O conteúdo deve ser formatado em HTML. Estruture a resposta da seguinte forma: 1. Um título principal para o resumo (criado pela IA, relacionado ao assunto) envolto em uma tag <h2>. 2. O corpo do texto deve ser dividido em parágrafos usando a tag <p>. 3. Destaque termos e conceitos importantes usando as tags <strong> para negrito e <em> para itálico. NÃO inclua nenhuma tag <style>, CSS, ou qualquer código que não seja o HTML do conteúdo em si. Também não inclua símbolos como *** ou ---.`;
-        break;
-    }
+    const loadingToastId = toast.loading('Gerando seu conteúdo... Por favor, aguarde.');
 
     try {
-      const apiUrl = '/api/generate';
+      const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+      const apiUrl = `${baseUrl}/api/generate`;
+
       const payload = {
-        prompt,
-        generationConfig,
+        type,
+        topic,
+        pages,
+        grade,
+        startDate,
+        endDate,
+        subjects,
+        className,
+        teacherName,
+        discipline,
+        weekdays,
+        questionTypes,
+        presentationStyle,
       };
 
       const response = await fetch(apiUrl, {
@@ -244,6 +225,11 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
       if (!result.candidates || result.candidates.length === 0) {
         throw new Error("A API não retornou nenhum conteúdo válido.");
       }
+      
+      toast.success('Conteúdo gerado com sucesso!', {
+        id: loadingToastId,
+      });
+
       const generatedText = result.candidates[0].content.parts[0].text;
       
       let generatedResult;
@@ -280,11 +266,17 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
 
     } catch (err) {
       console.error(err);
-      setError(`Ocorreu um erro ao gerar. Detalhes: ${err.message}. Tente novamente.`);
+      toast.error(`Ocorreu um erro: ${err.message}`, {
+        id: loadingToastId,
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [type, topic, pages, grade, startDate, endDate, subjects, className, teacherName, discipline, weekdays, questionTypes, presentationStyle, setResult, setView, isLoading]);
+  }, [
+    type, topic, pages, grade, startDate, endDate, subjects, className, 
+    teacherName, discipline, weekdays, questionTypes, presentationStyle, 
+    setResult, setView, isLoading
+  ]);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -365,8 +357,6 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
             </div>
           )}
         </div>
-
-        {error && <p className="text-red-500 mt-4 text-center text-sm">{error}</p>}
 
         <button onClick={handleGenerate} disabled={isLoading} className="form-button-primary mt-8">
           {isLoading ? <><Loader className="animate-spin mr-2" size={20} /> Gerando...</> : <><Cpu className="mr-2" size={20} /> {button}</>}
@@ -1473,6 +1463,18 @@ export default function App() {
 
   return (
     <>
+      <Toaster 
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 5000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+        }}
+      />
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Patrick+Hand&display=swap');
         

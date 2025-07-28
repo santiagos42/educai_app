@@ -1,15 +1,19 @@
-// ARQUIVO: api/generate.js
+// ARQUIVO: server.js (na raiz do projeto)
 
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
 const fetch = require('node-fetch');
 
-// A Vercel espera que você exporte uma função handler
-module.exports = async (req, res) => {
-  // Garante que o método seja POST
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
-  }
+const app = express();
+const PORT = 3001;
 
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
+// Endpoint principal da API
+app.post('/api/generate', async (req, res) => {
   try {
     const { 
       type, 
@@ -73,13 +77,9 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Tipo de geração inválido.' });
     }
 
-    if (!prompt) {
-      return res.status(400).json({ error: 'O prompt não pôde ser construído.' });
-    }
-
     const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: 'Chave de API não configurada no ambiente do servidor.' });
+      return res.status(500).json({ error: 'Chave de API não configurada no servidor.' });
     }
 
     const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
@@ -103,7 +103,11 @@ module.exports = async (req, res) => {
     return res.status(200).json(responseData);
 
   } catch (error) {
-    console.error('Erro na Função Sem Servidor:', error.message);
+    console.error('Erro no servidor proxy:', error.message);
     return res.status(500).json({ error: error.message });
   }
-};
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Servidor proxy LOCAL rodando em http://localhost:${PORT}`);
+});
