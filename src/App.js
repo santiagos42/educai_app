@@ -191,8 +191,22 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
     const loadingToastId = toast.loading('Gerando seu conteúdo... Por favor, aguarde.');
 
     try {
-      const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-      const apiUrl = `${baseUrl}/api/generate`;
+      // ===============================================================
+      // INÍCIO DA LÓGICA DE URL DINÂMICA
+      // ===============================================================
+      let apiUrl;
+
+      // NODE_ENV é uma variável padrão que diferencia os ambientes.
+      if (process.env.NODE_ENV === 'production') {
+        // Na Vercel (produção), usamos o caminho relativo.
+        apiUrl = '/api/generate';
+      } else {
+        // No seu PC (desenvolvimento), usamos a URL completa do seu servidor proxy local.
+        apiUrl = 'http://localhost:3001/api/generate';
+      }
+      // ===============================================================
+      // FIM DA LÓGICA DE URL DINÂMICA
+      // ===============================================================
 
       const payload = {
         type,
