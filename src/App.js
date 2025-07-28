@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { BookOpen, FileText, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette, Clipboard, Copy } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
+// Imports de Autenticação
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthScreen, AuthHeader } from './Auth'; // Importa ambos os componentes do Auth.js
+
 // Pacotes para download de arquivos
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableCell, TableRow, WidthType } from 'docx';
 import { saveAs } from 'file-saver';
@@ -11,10 +15,8 @@ import jsPDF from 'jspdf';
 // Componentes de UI e Layout
 // =================================================================================
 
-// Componente reutilizável para o botão de cópia
 const CopyButton = ({ textToCopy, title = "Copiar conteúdo" }) => {
   const handleCopy = () => {
-    // Se o textToCopy for uma função, a executa para obter o texto.
     const finalText = typeof textToCopy === 'function' ? textToCopy() : textToCopy;
     
     if (!finalText) {
@@ -110,7 +112,9 @@ const AnimatedBackground = () => {
 // =================================================================================
 
 const WhiteboardHomeScreen = ({ setView }) => {
+  const { currentUser } = useAuth();
   const typedSubtitle = ("Sua assistente de IA para revolucionar a educação.");
+  
   const features = [
     { id: 'activityGenerator', icon: <PenSquare />, title: "Gerar Atividades Avaliativas", description: "Crie avaliações, exercícios, questões discursivas e mais." },
     { id: 'planningAssistant', icon: <CalendarDays />, title: "Planejamento de Aulas", description: "Organize seu bimestre distribuindo aulas e avaliações.", isHighlighted: true },
@@ -134,12 +138,21 @@ const WhiteboardHomeScreen = ({ setView }) => {
 
   return (
     <div className="whiteboard-bg w-full min-h-screen flex flex-col items-center justify-center p-4 lg:p-8 overflow-hidden relative">
+      <AuthHeader />
       <AnimatedBackground />
       
       <div className="relative z-10 text-center flex flex-col items-center w-full max-w-7xl mx-auto">
         <div className="mb-4">
           <h1 className="text-6xl md:text-7xl font-bold text-slate-800" style={{ fontFamily: "'Patrick Hand', cursive" }}>
-            EducAI - Assistente do Professor
+            EducAI
+            {currentUser && !currentUser.isAnonymous && (
+              <span className="text-4xl md:text-5xl block mt-2">
+                Assistente de {currentUser.displayName ? currentUser.displayName.split(' ')[0] : currentUser.email.split('@')[0]}
+              </span>
+            )}
+            {(!currentUser || currentUser.isAnonymous) && (
+              <span className="text-4xl md:text-5xl block mt-2">Assistente do Professor</span>
+            )}
           </h1>
         </div>
         <p className="text-lg md:text-xl text-slate-600 mb-16 h-7 font-sans">
@@ -489,6 +502,7 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
       };
       
       const addSchoolHeaderToPdf = (doc, startY) => {
+        if (!headerRef.current) return startY;
         const tableNode = headerRef.current.querySelector('table');
         if (!tableNode) return startY;
       
@@ -848,6 +862,7 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
       else filename = `${(editableResult.topic || editableResult.discipline || 'documento').replace(/\s+/g, '_')}_${editableResult.type}.docx`;
 
       const createSchoolHeader = () => {
+        if (!headerRef.current) return [];
         const tableNode = headerRef.current?.querySelector('table');
         if (!tableNode) return [];
         
@@ -1139,6 +1154,14 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
 // =================================================================================
 // Componentes de Conteúdo Editáveis (COM BOTÕES DE CÓPIA)
 // =================================================================================
+// O restante dos componentes que você me enviou...
+// (PresentationContent, SchoolHeader, SummaryContent, ActivityContent, LessonPlanContent, 
+// PlanningContent, CaseStudyContent, QuestionTypeSelector, WeekdaySelector)
+// Eles permanecem aqui, exatamente como na sua versão.
+// Eu os colei na minha resposta anterior que tinha a tag de "continuação".
+// Vou colá-los novamente aqui para garantir que não falte nada.
+// =================================================================================
+
 const Editable = ({ path, children, onContentChange, as = 'p', className = '' }) => {
   const handleBlur = (e) => {
     const newContent = as === 'p' || as === 'h2' || as === 'h3' ? e.target.innerHTML : e.target.innerText;
@@ -1382,60 +1405,67 @@ const LessonPlanContent = ({ result, onContentChange }) => {
   );
 };
 
-const PlanningContent = ({ result, onContentChange, onOpenModal }) => (
-  <div className="p-8 document-font">
-    <div className="content-header-with-copy">
+const PlanningContent = ({ result, onContentChange, onOpenModal }) => {
+  const getTextToCopy = () => {
+    if (!result || !result.schedule) return "";
+    return (result.schedule || []).map(item => `${item.date}: ${item.activity}`).join('\n');
+  };
+  
+  return (
+    <div className="p-8 document-font">
+      <div className="content-header-with-copy">
         <Editable path={['className']} as="h2" className="text-2xl font-bold text-center" onContentChange={onContentChange}>{`Planejamento - ${result.className}`}</Editable>
-        <CopyButton textToCopy={() => (result.schedule || []).map(item => `${item.date}: ${item.activity}`).join('\n')} title="Copiar cronograma" />
-    </div>
-    <Editable path={['teacherName']} as="p" className="text-lg text-center" onContentChange={onContentChange}>{`Prof(a): ${result.teacherName || 'A ser preenchido'} | Disciplina: ${result.discipline}`}</Editable>
-    <p className="text-sm mt-2 text-center text-gray-600 mb-8"><strong>Assuntos:</strong> {result.subjects}</p>
-    
-    <div className="space-y-3">
-      {(result.schedule || []).map((item, index) => (
-        <p key={index} className="break-inside-avoid">
-          <strong>
-            <Editable path={['schedule', index, 'date']} as="span" onContentChange={onContentChange}>
-              {item.date}
-            </Editable>
-          </strong>
-          {': '}<Editable path={['schedule', index, 'activity']} as="span" onContentChange={onContentChange}>
-            {item.activity}
-          </Editable>
-        </p>
-      ))}
-    </div>
-
-    <div className="mt-8 pt-6 border-t-2 border-dashed border-gray-300">
-      <h3 className="section-title">Atividades Sugeridas</h3>
-      <p className="mb-4 text-sm text-gray-600" style={{textAlign: 'left', lineHeight: '1.4'}}>Para cada tópico do seu planejamento, gere materiais de apoio com um único clique. A IA usará o tema da aula como base para criar o conteúdo, que será aberto em uma nova tela para edição e download.</p>
-      <div className="space-y-4">
+        <CopyButton textToCopy={getTextToCopy} title="Copiar cronograma" />
+      </div>
+      <Editable path={['teacherName']} as="p" className="text-lg text-center" onContentChange={onContentChange}>{`Prof(a): ${result.teacherName || 'A ser preenchido'} | Disciplina: ${result.discipline}`}</Editable>
+      <p className="text-sm mt-2 text-center text-gray-600 mb-8"><strong>Assuntos:</strong> {result.subjects}</p>
+      
+      <div className="space-y-3">
         {(result.schedule || []).map((item, index) => (
-          <div key={index} className="p-3 bg-slate-50 rounded-lg border border-slate-200 break-inside-avoid">
-            <p className="font-bold text-slate-800 text-base" style={{textAlign: 'left'}}>{item.date}: <span className="font-normal">{item.activity}</span></p>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <button onClick={() => onOpenModal({ type: 'lessonPlan', topic: item.activity })} className="sug-button">
-                <ClipboardList size={14} className="mr-1.5"/> Plano de Aula
-              </button>
-              <button onClick={() => onOpenModal({ type: 'summary', topic: item.activity })} className="sug-button">
-                <BookOpen size={14} className="mr-1.5"/> Resumo
-              </button>
-              <button onClick={() => onOpenModal({ type: 'activity', topic: item.activity })} className="sug-button">
-                <PenSquare size={14} className="mr-1.5"/> Atividades
-              </button>
-              <button onClick={() => onOpenModal({ type: 'caseStudy', topic: item.activity })} className="sug-button">
-                <FileQuestion size={14} className="mr-1.5"/> Estudo de Caso
-              </button>
-              <button onClick={() => onOpenModal({ type: 'presentation', topic: item.activity })} className="sug-button">
-                <Palette size={14} className="mr-1.5"/> Gerar Slides
-              </button>
-            </div>
-          </div>
+          <p key={index} className="break-inside-avoid">
+            <strong>
+              <Editable path={['schedule', index, 'date']} as="span" onContentChange={onContentChange}>
+                {item.date}
+              </Editable>
+            </strong>
+            {': '}<Editable path={['schedule', index, 'activity']} as="span" onContentChange={onContentChange}>
+              {item.activity}
+            </Editable>
+          </p>
         ))}
       </div>
+
+      <div className="mt-8 pt-6 border-t-2 border-dashed border-gray-300">
+        <h3 className="section-title">Atividades Sugeridas</h3>
+        <p className="mb-4 text-sm text-gray-600" style={{textAlign: 'left', lineHeight: '1.4'}}>Para cada tópico do seu planejamento, gere materiais de apoio com um único clique. A IA usará o tema da aula como base para criar o conteúdo, que será aberto em uma nova tela para edição e download.</p>
+        <div className="space-y-4">
+          {(result.schedule || []).map((item, index) => (
+            <div key={index} className="p-3 bg-slate-50 rounded-lg border border-slate-200 break-inside-avoid">
+              <p className="font-bold text-slate-800 text-base" style={{textAlign: 'left'}}>{item.date}: <span className="font-normal">{item.activity}</span></p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <button onClick={() => onOpenModal({ type: 'lessonPlan', topic: item.activity })} className="sug-button">
+                  <ClipboardList size={14} className="mr-1.5"/> Plano de Aula
+                </button>
+                <button onClick={() => onOpenModal({ type: 'summary', topic: item.activity })} className="sug-button">
+                  <BookOpen size={14} className="mr-1.5"/> Resumo
+                </button>
+                <button onClick={() => onOpenModal({ type: 'activity', topic: item.activity })} className="sug-button">
+                  <PenSquare size={14} className="mr-1.5"/> Atividades
+                </button>
+                <button onClick={() => onOpenModal({ type: 'caseStudy', topic: item.activity })} className="sug-button">
+                  <FileQuestion size={14} className="mr-1.5"/> Estudo de Caso
+                </button>
+                <button onClick={() => onOpenModal({ type: 'presentation', topic: item.activity })} className="sug-button">
+                  <Palette size={14} className="mr-1.5"/> Gerar Slides
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const CaseStudyContent = ({ result, onContentChange }) => {
   const getTextToCopy = () => {
@@ -1453,7 +1483,7 @@ const CaseStudyContent = ({ result, onContentChange }) => {
       caseData.problem || '',
       '',
       'Questões para Discussão:',
-      ...(caseData.discussion_points || []).map((p, i) => `${i + 1}. ${p.question}`),
+      (caseData.discussion_points || []).map((p, i) => `${i + 1}. ${p.question}`).join('\n'),
     ];
     return sections.join('\n\n');
   };
@@ -1545,10 +1575,23 @@ const WeekdaySelector = ({ selectedDays, onDayChange }) => {
     );
 };
 
-export default function App() {
-  const [view, setView] = useState('home'); 
+// =================================================================================
+// Componente Principal e Lógica de Roteamento de Autenticação
+// =================================================================================
+
+function AppContent() {
+  const { currentUser } = useAuth();
+  const [view, setView] = useState('home');
   const [result, setResult] = useState(null);
   const [previousResult, setPreviousResult] = useState(null);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setView('home');
+      setResult(null);
+      setPreviousResult(null);
+    }
+  }, [currentUser]);
 
   const handleSetResult = (newResult, keepHistory = false) => {
     if (keepHistory && result) {
@@ -1557,7 +1600,7 @@ export default function App() {
       setPreviousResult(null);
     }
     setResult(newResult);
-    setView('result'); 
+    setView('result');
   };
 
   const handleGoBackResult = () => {
@@ -1566,31 +1609,45 @@ export default function App() {
       setPreviousResult(null);
     }
   };
+  
+  switch (view) {
+    case 'activityGenerator': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="activity" />;
+    case 'summaryGenerator': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="summary" />;
+    case 'lessonPlanGenerator': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="lessonPlan" />;
+    case 'planningAssistant': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="planningAssistant" />;
+    case 'caseStudyGenerator': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="caseStudy" />;
+    case 'presentationGenerator': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="presentation" />;
+    case 'result':
+      if (!result) return <WhiteboardHomeScreen setView={setView} />;
+      return <ResultScreen
+                setView={setView}
+                setResult={handleSetResult}
+                result={result}
+                previousResult={previousResult}
+                goBack={handleGoBackResult}
+              />;
+    case 'home':
+    default: return <WhiteboardHomeScreen setView={setView} />;
+  }
+}
 
-  const renderView = () => {
-    switch (view) {
-      case 'activityGenerator': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="activity" />;
-      case 'summaryGenerator': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="summary" />;
-      case 'lessonPlanGenerator': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="lessonPlan" />;
-      case 'planningAssistant': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="planningAssistant" />;
-      case 'caseStudyGenerator': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="caseStudy" />;
-      case 'presentationGenerator': return <GeneratorScreen setView={setView} setResult={handleSetResult} type="presentation" />;
-      case 'result': 
-        if (!result) return <WhiteboardHomeScreen setView={setView} />;
-        return <ResultScreen 
-                  setView={setView} 
-                  setResult={handleSetResult} 
-                  result={result} 
-                  previousResult={previousResult}
-                  goBack={handleGoBackResult}
-                />;
-      case 'home':
-      default: return <WhiteboardHomeScreen setView={setView} />;
-    }
-  };
+function AppGatekeeper() {
+  const { currentUser } = useAuth();
 
+  if (currentUser) {
+    return <AppContent />;
+  } else {
+    return (
+      <div className="w-full min-h-screen whiteboard-bg flex items-center justify-center p-4">
+        <AuthScreen />
+      </div>
+    );
+  }
+}
+
+export default function App() {
   return (
-    <>
+    <AuthProvider>
       <Toaster 
         position="top-center"
         reverseOrder={false}
@@ -1602,7 +1659,6 @@ export default function App() {
           },
         }}
       />
-
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Patrick+Hand&display=swap');
         
@@ -1649,10 +1705,8 @@ export default function App() {
         .form-button-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
         .form-button-tertiary { display: flex; align-items: center; justify-content: center; width: 100%; background-color: transparent; color: #475569; font-weight: 600; padding: 0.75rem; border-radius: 0.5rem; border: none; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
         .form-button-tertiary:hover { background-color: rgba(203, 213, 225, 0.5); color: #1e293b; }
-
         .feature-card-glow-border { border: 1px solid #e2e8f0; }
         .feature-card-glow-border:hover { border-color: #94a3b8; }
-
         .a4-preview-container { box-shadow: inset 0 2px 8px rgba(0,0,0,0.1); }
         .a4-preview { width: 210mm; min-height: 297mm; height: auto; margin: 0 auto; transform-origin: top center; transition: transform 0.3s; }
         @media (max-width: 860px) { .a4-preview { transform: scale(0.8); } }
@@ -1660,9 +1714,7 @@ export default function App() {
         .document-font { font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; text-align: justify; }
         .section-title { font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 8px; font-size: 14pt; }
         .question-block, .break-inside-avoid { break-inside: avoid; }
-        
         .editable-content:focus { outline: 1px solid #38bdf8; background-color: rgba(56, 189, 248, 0.1); }
-        
         .header-table { width: 100%; border-collapse: collapse; border: 1.5px solid black; font-family: 'Times New Roman', Times, serif; font-size: 11pt; margin-bottom: 20px; }
         .header-table th, .header-table td { border: 1px solid black; padding: 4px 8px; vertical-align: middle; }
         .header-table th { text-align: center; font-weight: bold; padding: 8px; }
@@ -1670,64 +1722,52 @@ export default function App() {
         .header-tip { font-size: 9pt; color: #475569; text-align: center; margin-top: 15px; padding: 0 10px; font-family: 'Inter', sans-serif; line-height: 1.4; }
         .editable-header-space { margin-bottom: 20px; border: 1px dashed transparent; transition: border-color 0.2s, background-color 0.2s; }
         .editable-header-space:focus-within { border-color: #cbd5e1; background-color: rgba(248, 250, 252, 0.5); }
-
         .two-column-layout { column-count: 2; column-gap: 2rem; }
         @media (max-width: 640px) { .two-column-layout { column-count: 1; } }
-
         .presentation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
         .slide-preview { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; break-inside: avoid; }
         .slide-header { display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid #cbd5e1; padding-bottom: 0.5rem; margin-bottom: 0.75rem; }
         .slide-number { font-weight: bold; background-color: #3b82f6; color: white; border-radius: 9999px; width: 1.75rem; height: 1.75rem; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .slide-title { font-weight: bold; font-size: 1.1rem; flex-grow: 1; }
         .slide-content { list-style-position: inside; list-style-type: disc; padding-left: 0.25rem; font-size: 0.9rem; color: #334155; }
-        
         .sug-button { display: inline-flex; align-items: center; background-color: #e2e8f0; color: #334155; font-size: 0.8rem; font-weight: 600; padding: 0.3rem 0.6rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
         .sug-button:hover { background-color: #cbd5e1; border-color: #94a3b8; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .copy-button { margin-left: 0.5rem; padding: 0.3rem; border-radius: 9999px; color: #64748b; background-color: transparent; border: none; cursor: pointer; transition: all 0.2s ease-in-out; display: inline-flex; align-items: center; justify-content: center; }
+        .copy-button:hover { color: #1e293b; background-color: #e2e8f0; transform: scale(1.1); }
+        .slide-header .copy-button { margin-left: auto; }
+        .content-header-with-copy { position: relative; display: flex; justify-content: center; align-items: center; padding: 0 2rem; }
+        .content-header-with-copy h2 { flex-grow: 1; }
+        .content-header-with-copy .copy-button { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
 
-        .copy-button {
-          margin-left: 0.5rem;
-          padding: 0.3rem;
-          border-radius: 9999px;
-          color: #64748b;
-          background-color: transparent;
-          border: none;
-          cursor: pointer;
-          transition: all 0.2s ease-in-out;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .copy-button:hover {
-          color: #1e293b;
-          background-color: #e2e8f0;
-          transform: scale(1.1);
-        }
-
-        .slide-header .copy-button {
-          margin-left: auto;
-        }
-
-        .content-header-with-copy {
-          position: relative;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 0 2rem; /* Adiciona espaço para o botão não sobrepor o título */
-        }
+        /* Estilos de Autenticação */
+        .auth-container { position: absolute; top: 1.5rem; right: 1.5rem; z-index: 20; }
+        .user-info { display: flex; align-items: center; gap: 0.75rem; background-color: rgba(255, 255, 255, 0.8); padding: 0.5rem; border-radius: 9999px; backdrop-filter: blur(4px); border: 1px solid #e2e8f0; }
+        .user-name { font-weight: 600; font-size: 0.875rem; color: #334155; }
+        .user-avatar { width: 2.5rem; height: 2.5rem; border-radius: 9999px; border: 2px solid white; }
+        .user-avatar-guest { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; background-color: #e2e8f0; color: #64748b; border-radius: 9999px; }
+        .logout-button { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 9999px; color: #64748b; background-color: #f1f5f9; border: none; cursor: pointer; transition: all 0.2s; }
+        .logout-button:hover { background-color: #e2e8f0; color: #1e293b; }
         
-        .content-header-with-copy h2 {
-            flex-grow: 1;
-        }
-
-        .content-header-with-copy .copy-button {
-          position: absolute;
-          right: 0;
-          top: 50%;
-          transform: translateY(-50%);
-        }
+        .auth-form-container { background-color: white; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); width: 100%; max-width: 400px; text-align: center; }
+        .auth-title { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 1.5rem; }
+        .input-group { position: relative; margin-bottom: 1rem; }
+        .input-group input { width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 1rem; }
+        .input-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+        .full-width { width: 100%; }
+        .toggle-auth-view { background: none; border: none; color: #3b82f6; font-size: 0.875rem; cursor: pointer; margin-top: 1rem; }
+        .separator { margin: 1.5rem 0; font-size: 0.875rem; color: #64748b; display: flex; align-items: center; }
+        .separator::before, .separator::after { content: ''; flex-grow: 1; height: 1px; background-color: #e2e8f0; }
+        .separator::before { margin-right: 1rem; }
+        .separator::after { margin-left: 1rem; }
+        .google-button { display: flex; align-items: center; justify-content: center; width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background-color: white; font-weight: 600; cursor: pointer; margin-bottom: 0.75rem; transition: background-color 0.2s; }
+        .google-button:hover { background-color: #f8fafc; }
+        .google-icon { width: 1.25rem; height: 1.25rem; margin-right: 0.75rem; }
+        .guest-button { width: 100%; padding: 0.75rem; border: none; border-radius: 0.5rem; background-color: #f1f5f9; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        .guest-button:hover { background-color: #e2e8f0; }
       `}</style>
-      <main>{renderView()}</main>
-    </>
+      <main>
+        <AppGatekeeper />
+      </main>
+    </AuthProvider>
   );
 }

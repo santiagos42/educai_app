@@ -1,10 +1,28 @@
-// ARQUIVO: api/generate.js
-
 const fetch = require('node-fetch');
 
-// A Vercel espera que você exporte uma função handler
+// Função de Retry que será usada neste arquivo
+async function fetchWithRetry(url, options, retries = 3, backoff = 300) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok && (response.status === 429 || response.status >= 500)) {
+        throw new Error(`Server error with status ${response.status}`);
+      }
+      return response;
+    } catch (error) {
+      if (i === retries - 1) {
+        console.error(`Final attempt failed: ${error.message}`);
+        throw error;
+      }
+      const delay = backoff * Math.pow(2, i);
+      console.log(`Attempt ${i + 1} failed. Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
+// Handler principal que a Vercel irá executar
 module.exports = async (req, res) => {
-  // Garante que o método seja POST
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
@@ -31,7 +49,7 @@ module.exports = async (req, res) => {
     let generationConfig = { response_mime_type: "application/json" };
     
     const allInstructions = {
-      enem: "Para questões 'enem', elabore um enunciado com um texto-base (contexto). A pergunta deve exigir interpretação, raciocínio crítico ou aplicação de conhecimento interdisciplinar. Crie 4 alternativas (a, b, c, d), sendo uma correta e três distratores verossímeis. A justificativa deve explicar por que a alternativa correta responde ao enunciado. Não faça menções a imagens, gráficos ou tabelas, apenas texto.",
+      enem: "Para questões 'enem', elabore um enunciado com um texto-base (contexto). A pergunta deve exigir interpretação, raciocínio crítico ou aplicação de conhecimento interdisciplinar. Crie 4 alternativas (a, b, c, d), sendo uma correta e três distratores verossímeis. A justificativa deve explicar por que a alternativa correta responde ao enunciado.",
       quiz: "Para questões 'quiz', crie uma pergunta direta e objetiva para verificação rápida de conhecimento. Deve ter 4 alternativas de múltipla escolha. A pergunta deve ser clara e sem ambiguidades.",
       discursive: "Para questões 'discursive', formule um problema ou uma pergunta aberta que exija do aluno uma resposta escrita, bem estruturada e fundamentada. A questão deve estimular a análise, comparação, argumentação ou síntese de informações sobre o tema.",
       'true-false': "Para questões 'true-false', crie uma afirmação clara e inequívoca sobre o tópico. O aluno deverá julgá-la como verdadeira ou falsa. A justificativa é crucial e deve explicar detalhadamente por que a afirmação é verdadeira ou falsa, corrigindo a informação se for o caso."
@@ -65,7 +83,7 @@ module.exports = async (req, res) => {
         break;
 
       case 'summary':
-        generationConfig = {}; // Summary não retorna JSON, então removemos a configuração
+        generationConfig = {};
         prompt = `Você é um professor especialista em criar resumos didáticos sobre várias áreas do conhecimento. Crie um resumo didático e bem estruturado sobre o tema '${topic}', com aproximadamente ${(pages || 1) * 500} palavras. O conteúdo deve ser formatado em HTML. Estruture a resposta da seguinte forma: 1. Um título principal para o resumo (criado pela IA, relacionado ao assunto) envolto em uma tag <h2>. 2. O corpo do texto deve ser dividido em parágrafos usando a tag <p>. 3. Destaque termos e conceitos importantes usando as tags <strong> para negrito e <em> para itálico. NÃO inclua nenhuma tag <style>, CSS, ou qualquer código que não seja o HTML do conteúdo em si. Também não inclua símbolos como *** ou ---.`;
         break;
 
@@ -84,26 +102,27 @@ module.exports = async (req, res) => {
 
     const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
     
-    const googleResponse = await fetch(googleApiUrl, {
+    const fetchOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig,
       }),
-    });
+    };
+    
+    const googleResponse = await fetchWithRetry(googleApiUrl, fetchOptions);
 
     const responseData = await googleResponse.json();
     
     if (!googleResponse.ok) {
-      console.error('Erro da API do Google:', responseData);
       throw new Error(responseData.error?.message || 'Erro desconhecido da API do Google.');
     }
     
     return res.status(200).json(responseData);
 
   } catch (error) {
-    console.error('Erro na Função Sem Servidor:', error.message);
+    console.error('Erro na Função Sem Servidor após todas as tentativas:', error.message);
     return res.status(500).json({ error: error.message });
   }
 };
