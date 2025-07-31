@@ -5,7 +5,7 @@ import {
   signInAsGuest, sendPasswordReset
 } from './firebase';
 import toast from 'react-hot-toast';
-import { LogOut, User, Mail, Key, Loader, Book } from 'lucide-react';
+import { LogOut, User, Mail, Key, Loader, Book} from 'lucide-react';
 
 const googleIconUrl = process.env.PUBLIC_URL + '/google.svg';
 const logoUrl = process.env.PUBLIC_URL + '/logo900.png';
@@ -13,27 +13,36 @@ const logoUrl = process.env.PUBLIC_URL + '/logo900.png';
 // =================================================================================
 // 1. COMPONENTE DE MARKETING - CORRIGIDO
 // =================================================================================
-const AuthMarketing = () => {
+const AuthMarketing = ({ setView }) => {
   return (
-    // Estrutura Flexbox para espaçamento e alinhamento
-    <div className="hidden lg:flex flex-col justify-between p-12 text-white h-full"> {/* Adicionado h-full para garantir que o flex funcione */}
-
-      {/* Seção Superior: Logo e Slogan */}
+    <div className="hidden lg:flex flex-col justify-between p-12 text-white h-full">
+      
+      {/* Seção Superior: Logo e Slogan (sem mudanças) */}
       <div className="text-center">
-        {/* CORREÇÃO: Adicionado src={logoUrl} */}
-        <img src={logoUrl} alt="EducAI Logo" className="w-68 h-68 mx-auto mb-4" />
+        <img src={logoUrl} alt="EducAI Logo" className="w-48 h-48 mx-auto mb-4" />
       </div>
-
-      {/* Seção Central: Carrossel de Funcionalidades */}
+      
+      {/* Seção Central: Descrição (sem mudanças) */}
       <div className="w-full my-2">
         <h2 className="text-3xl font-bold text-center mt-0 mb-14" style={{ fontFamily: "'Patrick Hand', cursive" }}>Transforme sua forma de ensinar</h2>
         <p className="text-slate-300 text-center text-base mb-6">O EducAI - Assistente do Professor é seu copiloto inteligente para uma sala de aula mais dinâmica e organizada.</p>
         <p className="text-slate-300 text-center text-base mb-6">Trata-se de uma plataforma desenvolvida por professores para professores.</p>
       </div>
 
-      {/* Seção Inferior: Slogan Final */}
+      {/* Seção Inferior: Slogan Final + NOVO BOTÃO */}
       <div className="text-center">
-        <p className="text-1xl font-bold text-white" style={{ fontFamily: "'Patrick Hand', cursive" }}>O futuro está aqui. Experimente.</p>
+        <p className="text-1xl font-bold text-white mb-6" style={{ fontFamily: "'Patrick Hand', cursive" }}>O futuro está aqui. Experimente.</p>
+        
+        {/* ================================================= */}
+        {/* NOVO BOTÃO ADICIONADO AQUI                     */}
+        {/* ================================================= */}
+        <button 
+          onClick={() => setView('features')}
+          className="bg-sky-500/20 text-sky-300 border border-sky-400/50 rounded-full px-8 py-3 font-semibold hover:bg-sky-500/40 hover:text-white transition-all duration-300"
+        >
+          Conheça as Funcionalidades
+        </button>
+
       </div>
 
     </div>
@@ -221,56 +230,67 @@ const InspirationalQuote = () => {
 // =================================================================================
 // 3. TELA PRINCIPAL DE AUTENTICAÇÃO (AuthScreen) - CORREÇÕES
 // =================================================================================
-export function AuthScreen() {
-  const [view, setView] = useState('login');
+export function AuthScreen({ setView }) {
+  const [authView, setAuthView] = useState('login');
   const handleGoogleLogin = async () => { try { await signInWithGoogle(); toast.success('Login bem-sucedido!'); } catch (error) { toast.error('Falha no login com Google.'); } };
   const handleGuestLogin = async () => { try { await signInAsGuest(); toast.success('Entrando como convidado!'); } catch (error) { toast.error('Falha ao entrar como convidado.'); } };
   const titles = { login: "Acesse sua conta", signup: "Crie sua conta", forgotPassword: "Recuperar Senha" };
   const brandColor = "#63D4B4";
 
   return (
-    <div className="w-full max-w-4xl bg-slate-800 rounded-2xl shadow-2xl flex overflow-hidden animate-fade-in-up">
-      {/* Lado Esquerdo - Marketing */}
-      <div className="w-1/2 hidden lg:block bg-slate-800"> {/* Garante o fundo correto */}
-        <AuthMarketing />
+    // O bloco central, com 2 colunas, como no seu design original.
+    // Ajustamos a largura máxima para ficar mais coeso sem os painéis laterais.
+    <div className="w-full max-w-5xl bg-slate-800 rounded-2xl shadow-2xl flex flex-col lg:flex-row overflow-hidden animate-fade-in-up">
+      
+      {/* Coluna Esquerda: Sua Logo e Marketing, agora com o botão para a página de features */}
+      <div className="w-full lg:w-1/2 hidden lg:flex">
+        {/* Passamos `setView` para que o novo botão dentro de AuthMarketing funcione */}
+        <AuthMarketing setView={setView} />
       </div>
 
-      {/* Lado Direito - Formulários */}
-      <div className="w-full lg:w-1/2 p-8 flex flex-col bg-slate-50">
-
-        <div className="flex-grow flex flex-col justify-center">
+      {/* Coluna Direita: Formulários e Citações */}
+      <div className="w-full lg:w-1/2 bg-slate-50 p-8 flex flex-col">
+                <div className="flex-grow flex flex-col justify-center">
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold" style={{ color: brandColor, fontFamily: "'Patrick Hand', cursive" }}>Junte-se a nós nessa missão</h1>
             <p className="text-slate-500 text-sm" style={{ color: brandColor, fontFamily: "'Patrick Hand', cursive" }} >O nosso objetivo é otimizar o seu trabalho</p>
           </div>
+        </div>
 
-          <h2 className="text-xl font-bold text-slate-700 mb-5 text-center">{titles[view]}</h2>
+        {/* Conteúdo principal que cresce para preencher o espaço */}
+        <div className="flex-grow flex flex-col justify-center">
+          <h2 className="text-xl font-bold text-slate-700 mb-5 text-center">{titles[authView]}</h2>
 
-          {/* CORREÇÃO: Condições de view corrigidas */}
-          {view === 'login' && <LoginForm setView={setView} />}
-          {view === 'signup' && <SignUpForm setView={setView} />}
-          {view === 'forgotPassword' && <ForgotPasswordForm setView={setView} />}
+          {/* Renderização condicional dos formulários */}
+          {authView === 'login' && <LoginForm setView={setAuthView} />}
+          {authView === 'signup' && <SignUpForm setView={setAuthView} />}
+          {authView === 'forgotPassword' && <ForgotPasswordForm setView={setAuthView} />}
 
+          {/* Botões para alternar entre os formulários */}
           <div className="text-center mt-4">
-            {view === 'login' && <button onClick={() => setView('signup')} className="toggle-auth-view">Não tem uma conta? <strong>Crie uma agora</strong></button>}
-            {(view === 'signup' || view === 'forgotPassword') && <button onClick={() => setView('login')} className="toggle-auth-view">Já tem uma conta? <strong>Faça o login</strong></button>}
+            {authView === 'login' && (
+              <button onClick={() => setAuthView('signup')} className="toggle-auth-view">
+                Não tem uma conta? <strong>Crie uma agora</strong>
+              </button>
+            )}
+            {(authView === 'signup' || authView === 'forgotPassword') && (
+              <button onClick={() => setAuthView('login')} className="toggle-auth-view">
+                Já tem uma conta? <strong>Faça o login</strong>
+              </button>
+            )}
           </div>
-
+          
           <div className="separator">ou</div>
           
-          {/* CORREÇÃO: Classes dos botões e da imagem corrigidas */}
+          {/* Botões de login social */}
           <div className="flex flex-col sm:flex-row gap-4">
-            <button onClick={handleGoogleLogin} className="form-button-secondary flex-1 flex items-center justify-center gap-2">
-              <img src={googleIconUrl} alt="Google" className="w-5 h-5" />
-              Entrar com Google
-            </button>
-            <button onClick={handleGuestLogin} className="form-button-secondary flex-1">
-              Entrar como Convidado
-            </button>
+            <button onClick={handleGoogleLogin} className="google-button flex-1"><img src={googleIconUrl} alt="Google" className="google-icon" />Entrar com Google</button>
+            <button onClick={handleGuestLogin} className="form-button-secondary flex-1">Entrar como Convidado</button>
           </div>
         </div>
 
-        <div className="flex-shrink-0 pt-6">
+        {/* Rodapé com a citação inspiradora */}
+        <div className="flex-shrink-0 pt-6 mt-6 border-t border-slate-200">
           <InspirationalQuote />
         </div>
       </div>

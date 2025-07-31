@@ -363,9 +363,85 @@ const ValuePropGrid = () => {
 
   return (
     <div className="hidden lg:block value-prop-wrapper">
-      {renderColumn(leftProps)}
+      {/* O espaçador agora vem primeiro, empurrando o conteúdo para a direita */}
       <div className="value-prop-spacer"></div> 
-      {renderColumn(rightProps)}
+
+      {/* As duas colunas de painéis */}
+      <div className="value-prop-content-area">
+        {renderColumn(leftProps)}
+        {renderColumn(rightProps)}
+      </div>
+    </div>
+  );
+};
+
+const FeaturesScreen = ({ setView }) => {
+  // Reutilizamos os mesmos painéis de antes, talvez com descrições mais completas
+  const allFeatures = [
+    { icon: <Cpu size={28} />, title: "Geração Inteligente", description: "Crie planos de aula, atividades, simulados e resumos completos em segundos. Nossa IA é treinada para entender as nuances pedagógicas e entregar materiais de alta qualidade que você pode usar imediatamente." },
+    { icon: <Clock size={28} />, title: "Foco no que Importa", description: "A maior queixa dos professores é a falta de tempo. Reduza horas de trabalho burocrático e planejamento em minutos. Deixe a IA cuidar das tarefas repetitivas para que você possa se dedicar ao que ama: ensinar e interagir com seus alunos." },
+    { icon: <FolderClock size={28} />, title: "Organização Total", description: "Diga adeus às pastas perdidas no seu computador. Gerencie todos os seus materiais em um Drive intuitivo e seguro, organizado por turma, matéria ou projeto. Acesse de qualquer lugar, a qualquer hora." },
+    { icon: <GraduationCap size={28} />, title: "Alinhamento com a BNCC", description: "Garanta uma prática pedagógica sempre atualizada. Gere conteúdo que já considera as habilidades e competências da Base Nacional Comum Curricular, facilitando seu planejamento e garantindo a relevância do ensino." },
+    { icon: <Palette size={28} />, title: "Formatos Profissionais", description: "Exporte seus conteúdos para PDF e DOCX com um único clique. Os documentos já saem com formatação limpa e cabeçalhos profissionais, prontos para imprimir e entregar aos seus alunos ou coordenação." },
+    { icon: <MessageSquare size={28} />, title: "Feedback Inteligente", description: "Crie gabaritos comentados e sugestões de respostas para suas atividades em segundos. Facilite o processo de correção e forneça retornos mais ricos e construtivos para o desenvolvimento dos estudantes." },
+    { icon: <Sparkles size={28} />, title: "Aulas Mais Dinâmicas", description: "Saia da rotina. Gere estudos de caso, roteiros para debates e projetos que capturam a atenção dos alunos, promovem o pensamento crítico e tornam o aprendizado uma experiência memorável." },
+    { icon: <ShieldCheck size={28} />, title: "Seguro e Acessível", description: "Sua privacidade e a segurança dos seus dados são nossa prioridade máxima. Utilizamos as melhores práticas de segurança para que você possa focar no que importa sem preocupações." },
+    { icon: <Library size={28} />, title: "Biblioteca de Recursos", description: "Em breve: acesse um vasto banco de materiais gerados e validados pela nossa comunidade de educadores. Inspire-se com o trabalho de outros professores e compartilhe suas próprias criações." },
+    { icon: <Rocket size={28} />, title: "Suporte Contínuo", description: "O EducAI é uma plataforma viva, em constante evolução. Lançamos novas ferramentas e atualizações regularmente, muitas delas baseadas diretamente no feedback de professores como você." }
+  ];
+
+  return(
+    <div className="w-full min-h-screen bg-slate-900 text-white p-4 sm:p-8 lg:p-12 animate-fade-in">
+      <div className="max-w-7xl mx-auto">
+        {/* Cabeçalho e CTA */}
+        <header className="text-center mb-12 md:mb-20">
+          <h1 className="text-4xl md:text-6xl font-bold" style={{ fontFamily: "'Patrick Hand', cursive" }}>
+            Uma Plataforma Completa Para o <span className="text-sky-400">Educador Moderno</span>
+          </h1>
+          <p className="mt-4 max-w-3xl mx-auto text-lg text-slate-300">
+            Explore as ferramentas que estão revolucionando o planejamento de aulas e a criação de conteúdo pedagógico.
+          </p>
+          <div className="mt-8 flex justify-center gap-4">
+            <button onClick={() => setView('login')} className="form-button-primary px-8 py-3 text-lg">
+              Começar Agora (Grátis)
+            </button>
+            <button onClick={() => setView('login')} className="form-button-secondary px-8 py-3 text-lg">
+              Voltar para o Login
+            </button>
+          </div>
+        </header>
+
+        {/* Grid de Funcionalidades */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {allFeatures.map((feature, index) => (
+            <div key={index} className="feature-card-detailed">
+              <div className="feature-icon">{feature.icon}</div>
+              <h3 className="feature-title-detailed">{feature.title}</h3>
+              <p className="feature-description-detailed">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+        
+        {/* Seção de Marketing Adicional: FAQ */}
+        <section className="mt-20 max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-8">Perguntas Frequentes</h2>
+          <div className="space-y-4">
+            <details className="faq-item">
+              <summary>O plano Freemium é grátis para sempre?</summary>
+              <p>Sim! O plano Freemium permite que você utilize as funcionalidades essenciais da plataforma com um limite mensal de gerações, sem custo e sem necessidade de cartão de crédito.</p>
+            </details>
+            <details className="faq-item">
+              <summary>Meus dados e materiais estão seguros?</summary>
+              <p>Absolutamente. A segurança e privacidade são nossa maior prioridade. Utilizamos criptografia de ponta e as melhores práticas do mercado para proteger todas as informações em sua conta.</p>
+            </details>
+             <details className="faq-item">
+              <summary>Posso cancelar meu plano a qualquer momento?</summary>
+              <p>Sim. Você tem total controle sobre sua assinatura. O cancelamento pode ser feito de forma simples e rápida diretamente no seu painel de controle, sem burocracia.</p>
+            </details>
+          </div>
+        </section>
+
+      </div>
     </div>
   );
 };
@@ -1476,30 +1552,38 @@ function AppContent() {
 
 function AppGatekeeper() {
   const { currentUser, loading } = useAuth();
-  if (loading) return <div className="w-full min-h-screen flex items-center justify-center bg-slate-900"><Loader className="animate-spin text-sky-500" size={48} /></div>;
+  const [pageView, setPageView] = useState('auth'); 
 
-  const renderAuthLayout = (authComponent) => (
-    <div className="w-full min-h-screen auth-modern-bg relative">
-      <ModernAuthBackground />
-      {/* Camada de Marketing no fundo */}
-      <ValuePropGrid />
-      
-      {/* Contêiner DEPOIS, para ficar por cima, focado em centralizar o conteúdo */}
-      <div className="auth-card-container">
-        {authComponent}
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-slate-900">
+        <Loader className="animate-spin text-sky-500" size={48} />
       </div>
+    );
+  }
+  
+  if (currentUser) {
+    // ... (lógica do usuário logado)
+    return <AppContent />;
+  }
+
+  // --- LÓGICA PARA USUÁRIO NÃO-LOGADO ---
+
+  if (pageView === 'features') {
+    // Renderiza a página de funcionalidades quando o estado muda
+    return <FeaturesScreen setView={setPageView} />;
+  }
+
+  // A tela padrão é a de autenticação.
+  // Ela é centralizada, mas sem os painéis de fundo.
+  return (
+    <div className="w-full min-h-screen auth-modern-bg flex items-center justify-center p-4 relative">
+      <ModernAuthBackground />
+      
+      {/* Removemos o <ValuePropGrid /> e o .auth-card-container */}
+      <AuthScreen setView={setPageView} />
     </div>
   );
-
-  if (currentUser) {
-    const isEmailUser = currentUser.providerData.some(p => p.providerId === 'password');
-    if (isEmailUser && !currentUser.emailVerified) {
-      return renderAuthLayout(<VerifyEmailScreen />);
-    }
-    return <AppContent />;
-  } 
-  
-  return renderAuthLayout(<AuthScreen />);
 }
 
 export default function App() {
@@ -1640,82 +1724,55 @@ export default function App() {
           animation-delay: -10s;
         }
 
-        /* Contêiner de centralização para a caixa de login (permanece o mesmo) */
-        .auth-card-container {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 10;
-        }
+        /* Adicione estas novas regras à sua tag <style> no App.js */
 
-        /* Wrapper principal dos painéis de marketing */
-        .value-prop-wrapper {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center; /* Centraliza as colunas verticalmente */
-          justify-content: space-between; /* A chave para colocar um na esquerda e outro na direita */
-          padding: 0 5rem; /* Apenas espaçamento lateral, o align-items cuida do vertical */
-          pointer-events: none;
-        }
-
-        /* Cada coluna de painéis (Esquerda e Direita) */
-        .value-prop-column {
-          width: 320px; /* Largura fixa para os painéis */
-          flex-shrink: 0;
-          display: flex;
-          flex-direction: column;
-          justify-content: center; /* Centraliza os painéis dentro da coluna */
-          gap: 2rem;
-          pointer-events: auto; /* Permite interações com os painéis */
-        }
-
-        /* Oculta o espaçador, pois a nova lógica o torna desnecessário */
-        .value-prop-spacer {
-          display: none;
-        }
-
-        /* O painel individual (sem mudanças) */
-        .value-prop-panel {
-          background-color: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+        /* --- Estilos para a Página de Funcionalidades --- */
+        .feature-card-detailed {
+          background: linear-gradient(145deg, #1e293b, #111827); /* bg-slate-800 to bg-gray-900 */
+          border: 1px solid #334155; /* border-slate-700 */
           border-radius: 1rem;
-          padding: 1.5rem;
-          backdrop-filter: blur(5px);
-          -webkit-backdrop-filter: blur(5px);
-          opacity: 0;
-          animation: fadeInUp 0.8s ease-out forwards;
+          padding: 2rem;
+          transition: all 0.3s ease;
         }
-
-        .value-prop-panel h3 {
-          font-family: 'Patrick Hand', cursive;
+        .feature-card-detailed:hover {
+          transform: scale(1.03);
+          border-color: #38bdf8; /* border-sky-400 */
+          box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+        .feature-icon {
+          color: #38bdf8;
+          margin-bottom: 1rem;
+        }
+        .feature-title-detailed {
           font-size: 1.5rem;
-          color: white;
-          margin-bottom: 0.5rem;
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
+          font-weight: 700;
+          margin-bottom: 0.75rem;
         }
-
-        .value-prop-panel p {
-          font-size: 0.9rem;
-          color: #d1d5db; /* text-slate-300 */
-          line-height: 1.5;
+        .feature-description-detailed {
+          color: #cbd5e1; /* text-slate-300 */
+          line-height: 1.6;
         }
-
-        /* Ajustes para telas maiores */
-        @media (min-width: 1536px) { /* 2xl */
-          .value-prop-wrapper {
-            padding: 0 8rem; /* Aumenta o espaçamento lateral */
-          }
-          .value-prop-column {
-            width: 350px;
-          }
+        .faq-item {
+          background-color: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 0.5rem;
+          padding: 1rem;
         }
-
-
+        .faq-item summary {
+          font-weight: 600;
+          cursor: pointer;
+          list-style: none; /* Remove default marker */
+        }
+        .faq-item summary::-webkit-details-marker {
+          display: none; /* Remove default marker for Chrome */
+        }
+        .faq-item p {
+          margin-top: 1rem;
+          color: #cbd5e1;
+          border-top: 1px solid #334155;
+          padding-top: 1rem;
+        }
+        /* --- Estilo Base para Ambos os Cartões --- */
 
       `}</style>
       <main>
