@@ -65,12 +65,17 @@ const LoginForm = ({ setView }) => {
       await signInWithEmail(email, password);
       toast.success("Login bem-sucedido!");
     } catch (error) {
-      toast.error("Falha no login. Verifique suas credenciais.");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+     if (error.code === 'auth/email-already-in-use') {
+      toast.error("Este e-mail já está em uso. Tente fazer login ou recuperar sua senha.");
+    } else {
+      // Para outros erros, como o de senha fraca que veremos a seguir
+      toast.error(`Falha ao criar conta: ${error.message}`);
     }
-  };
+    console.error("Erro no cadastro:", error); 
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // CORREÇÃO GERAL: Sintaxe JSX corrigida
   return (

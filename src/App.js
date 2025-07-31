@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 // Ícones
 import { 
     BookOpen, FileText, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, 
-    ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette, Clipboard, 
+    ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette,
     Copy, Folder, FolderPlus, MoreVertical, Edit, Trash2 as TrashIcon, Save, FolderClock, Clock,
-    LayoutGrid, List, Star, Home, Move, ArrowRight, ShieldCheck, ShieldCheckUsers, Tv, Library, MessageSquare, Sparkles, Rocket
+    LayoutGrid, List, Home, Move, ArrowRight, ShieldCheck, Library, MessageSquare, Sparkles, Rocket, Mail
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -322,59 +322,6 @@ const ModernAuthBackground = () => (
     <div className="absolute inset-0 w-full h-full -z-10"><div className="auth-shape auth-shape-1"></div><div className="auth-shape auth-shape-2"></div></div>
 );
 
-const ValuePropPanels = () => (
-    <div className="hidden lg:block">
-        <div className="value-prop-panel panel-top-left"><h3><Cpu size={24} className="text-sky-400" />Geração Inteligente</h3><p>Crie planos de aula, atividades e resumos completos em segundos, alinhados com suas necessidades pedagógicas.</p></div>
-        <div className="value-prop-panel panel-bottom-left"><h3><FolderClock size={24} className="text-sky-400" />Organização Total</h3><p>Gerencie todos os seus materiais em um Drive intuitivo, com pastas por turma, matéria ou projeto. Nunca mais perca um arquivo.</p></div>
-        <div className="value-prop-panel panel-top-right"><h3><Palette size={24} className="text-sky-400" />Formatos Profissionais</h3><p>Exporte seus conteúdos para PDF e DOCX com um clique. Prontos para imprimir e entregar, com cabeçalhos e formatação.</p></div>
-        <div className="value-prop-panel panel-bottom-right"><h3><ShieldCheck size={24} className="text-sky-400" />Seguro e Acessível</h3><p>Seus dados são protegidos e estão disponíveis em qualquer lugar, a qualquer hora. Foque no que importa: ensinar.</p></div>
-    </div>
-);
-
-const ValuePropGrid = () => {
-  // COLUNA DA ESQUERDA - 5 ITENS
-  const leftProps = [
-    { icon: <Library size={24} className="text-teal-400" />, title: "Biblioteca de Recursos", description: "Acesse e salve um vasto banco de materiais gerados pela comunidade e inspire-se." },
-    { icon: <Cpu size={24} className="text-sky-400" />, title: "Geração Inteligente", description: "Crie planos de aula, atividades e resumos completos em segundos." },
-    { icon: <FolderClock size={24} className="text-yellow-400" />, title: "Organização Total", description: "Gerencie todos os seus materiais em um Drive intuitivo, com pastas e projetos." },
-    { icon: <Palette size={24} className="text-purple-400" />, title: "Formatos Profissionais", description: "Exporte seus conteúdos para PDF e DOCX com um clique, prontos para imprimir." },
-    { icon: <MessageSquare size={24} className="text-blue-400" />, title: "Feedback Inteligente", description: "Crie gabaritos comentados e sugestões de respostas para suas atividades com um clique." }
-  ];
-
-  // COLUNA DA DIREITA - 5 ITENS
-  const rightProps = [
-    { icon: <Sparkles size={24} className="text-amber-400" />, title: "Aulas Mais Dinâmicas", description: "Gere estudos de caso e debates que capturam a atenção e promovem o pensamento crítico." },
-    { icon: <Clock size={24} className="text-green-400" />, title: "Foco no que Importa", description: "Reduza horas de planejamento em minutos e dedique-se mais aos seus alunos." },
-    { icon: <GraduationCap size={24} className="text-orange-400" />, title: "Alinhamento com a BNCC", description: "Gere conteúdo que já considera as habilidades da Base Nacional Comum Curricular." },
-    { icon: <ShieldCheck size={24} className="text-red-400" />, title: "Seguro e Acessível", description: "Seus dados são protegidos e estão disponíveis em qualquer lugar, a qualquer hora." },
-    { icon: <Rocket size={24} className="text-rose-400" />, title: "Suporte Contínuo", description: "Plataforma em constante evolução, com novas ferramentas baseadas no seu feedback." }
-  ];
-
-  const renderColumn = (props) => (
-    <div className="value-prop-column">
-      {props.map((prop, index) => (
-        <div key={prop.title} className="value-prop-panel" style={{ animationDelay: `${100 * (index + 1)}ms` }}>
-          <h3>{prop.icon}{prop.title}</h3>
-          <p>{prop.description}</p>
-        </div>
-      ))}
-    </div>
-  );
-
-  return (
-    <div className="hidden lg:block value-prop-wrapper">
-      {/* O espaçador agora vem primeiro, empurrando o conteúdo para a direita */}
-      <div className="value-prop-spacer"></div> 
-
-      {/* As duas colunas de painéis */}
-      <div className="value-prop-content-area">
-        {renderColumn(leftProps)}
-        {renderColumn(rightProps)}
-      </div>
-    </div>
-  );
-};
-
 const FeaturesScreen = ({ setView }) => {
   // Reutilizamos os mesmos painéis de antes, talvez com descrições mais completas
   const allFeatures = [
@@ -444,12 +391,6 @@ const FeaturesScreen = ({ setView }) => {
       </div>
     </div>
   );
-};
-
-const VerifyEmailScreen = () => {
-    const { currentUser } = useAuth(); const [isSending, setIsSending] = useState(false);
-    const handleResend = async () => { if (!currentUser) return; setIsSending(true); try { await resendVerificationEmail(currentUser); toast.success("Novo e-mail de verificação enviado!"); } catch (error) { toast.error("Falha ao reenviar e-mail. Tente novamente mais tarde."); } finally { setIsSending(false); } };
-    return (<div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-slate-700 rounded-xl shadow-lg p-8 text-center animate-fade-in-up"><CheckCircle size={48} className="mx-auto text-green-400 mb-4" /><h1 className="text-2xl font-bold text-white">Verifique seu E-mail</h1><p className="text-slate-300 mt-2 mb-6">Enviamos um link de confirmação para <strong>{currentUser?.email}</strong>. Por favor, clique no link para ativar sua conta e acessar a plataforma.</p><p className="text-xs text-slate-400 mb-6">Após verificar, atualize esta página.</p><button onClick={handleResend} disabled={isSending} className="form-button-secondary w-full">{isSending ? <Loader className="animate-spin mr-2" /> : null}Reenviar E-mail</button><button onClick={() => logout()} className="toggle-auth-view mt-4">Sair e usar outra conta</button></div>);
 };
 
 const HistoryScreen = ({ setView, loadGeneration }) => {
@@ -1528,6 +1469,59 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
   );
 };
 
+const VerifyEmailScreen = () => {
+  const { currentUser } = useAuth();
+  const [isSending, setIsSending] = useState(false);
+  const [sendSuccess, setSendSuccess] = useState(false);
+
+  const handleResend = async () => {
+    if (!currentUser) return;
+    setIsSending(true);
+    setSendSuccess(false);
+    try {
+      await resendVerificationEmail(currentUser);
+      toast.success("Novo e-mail de verificação enviado!");
+      setSendSuccess(true);
+    } catch (error) {
+      toast.error("Falha ao reenviar. Tente novamente em alguns minutos.");
+      console.error(error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Você saiu da conta.");
+    } catch (error) {
+      toast.error("Erro ao sair.");
+    }
+  };
+
+  return (
+    <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8 text-center animate-fade-in-up">
+      <Mail className="mx-auto text-sky-500 mb-4" size={48} />
+      <h1 className="text-2xl font-bold text-slate-800">Verifique seu E-mail</h1>
+      <p className="text-slate-600 mt-2 mb-6">
+        Enviamos um link de confirmação para <strong>{currentUser?.email}</strong>. Por favor, clique no link para ativar sua conta.
+      </p>
+      <p className="text-sm text-slate-500 mb-6">
+        Após verificar, <strong>atualize esta página</strong> para acessar a plataforma. Não se esqueça de checar sua caixa de spam.
+      </p>
+      
+      <button onClick={handleResend} disabled={isSending} className="form-button-primary w-full">
+        {isSending ? <Loader className="animate-spin mr-2" /> : null}
+        {sendSuccess ? 'E-mail Reenviado!' : 'Reenviar E-mail de Confirmação'}
+      </button>
+
+      <button onClick={handleLogout} className="toggle-auth-view mt-4">
+        Usar outra conta
+      </button>
+    </div>
+  );
+};
+
 
 
 // =================================================================================
@@ -1551,7 +1545,7 @@ function AppContent() {
 }
 
 function AppGatekeeper() {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, loading, reloadUser } = useAuth(); // Pode ser necessário adicionar reloadUser ao seu AuthContext
   const [pageView, setPageView] = useState('auth'); 
 
   if (loading) {
@@ -1562,30 +1556,38 @@ function AppGatekeeper() {
     );
   }
   
+  // --- LÓGICA DE TRAVA DE ACESSO ---
   if (currentUser) {
-    // ... (lógica do usuário logado)
+    // Verifica se o usuário logou com e-mail/senha
+    const isEmailUser = currentUser.providerData.some(p => p.providerId === 'password');
+    
+    // SE for um usuário de e-mail E o e-mail NÃO estiver verificado...
+    if (isEmailUser && !currentUser.emailVerified) {
+      // ...mostre a tela de verificação e bloqueie o acesso ao resto do app.
+      return (
+        <div className="w-full min-h-screen auth-modern-bg flex items-center justify-center p-4 relative">
+          <ModernAuthBackground />
+          <VerifyEmailScreen />
+        </div>
+      );
+    }
+
+    // Se passou na verificação (ou é um usuário do Google/Convidado), mostre o conteúdo.
     return <AppContent />;
   }
 
   // --- LÓGICA PARA USUÁRIO NÃO-LOGADO ---
-
   if (pageView === 'features') {
-    // Renderiza a página de funcionalidades quando o estado muda
     return <FeaturesScreen setView={setPageView} />;
   }
 
-  // A tela padrão é a de autenticação.
-  // Ela é centralizada, mas sem os painéis de fundo.
   return (
     <div className="w-full min-h-screen auth-modern-bg flex items-center justify-center p-4 relative">
       <ModernAuthBackground />
-      
-      {/* Removemos o <ValuePropGrid /> e o .auth-card-container */}
       <AuthScreen setView={setPageView} />
     </div>
   );
 }
-
 export default function App() {
   return (
     <AuthProvider>
