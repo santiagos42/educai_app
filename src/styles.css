@@ -82,7 +82,7 @@
         .input-group input { width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 1rem; }
         .input-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
         .full-width { width: 100%; }
-        .toggle-auth-view { background: none; border: none; color: #3b82f6; font-size: 0.875rem; cursor: pointer; margin-top: 1rem; }
+        .toggle-auth-view { background: none; border: none; color: #ccddff; font-size: 0.875rem; cursor: pointer; margin-top: 1rem; }
         .separator { margin: 1.5rem 0; font-size: 0.875rem; color: #64748b; display: flex; align-items: center; }
         .separator::before, .separator::after { content: ''; flex-grow: 1; height: 1px; background-color: #e2e8f0; }
         .separator::before { margin-right: 1rem; }

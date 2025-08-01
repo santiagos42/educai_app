@@ -15,7 +15,7 @@ const logoUrl = process.env.PUBLIC_URL + '/logo900.png';
 // =================================================================================
 // NOVO COMPONENTE 1: PAINEL DE PLANOS (PRICING)
 // =================================================================================
-const PricingTiers = () => {
+const PricingTiers = ({ onNavigate }) => {
   const plans = [
     {
       name: "Plano Freemium",
@@ -29,6 +29,7 @@ const PricingTiers = () => {
       ],
       buttonText: "Criar Conta Gratuita",
       isPrimary: false,
+      action: () => onNavigate('signup'),
     },
     {
       name: "Plano Premium",
@@ -42,6 +43,7 @@ const PricingTiers = () => {
       ],
       buttonText: "Seja Premium",
       isPrimary: true,
+      action: () => onNavigate('signup'),
     }
   ];
 
@@ -63,9 +65,12 @@ const PricingTiers = () => {
               <li key={feature}><Check size={16} className="feature-check-icon"/><span>{feature}</span></li>
             ))}
           </ul>
-          <button className={`plan-button ${plan.isPrimary ? 'primary-button' : 'secondary-button'}`}>
+          <button 
+          onClick={() => onNavigate('signup')}
+          className={`plan-button ${plan.isPrimary ? 'primary-button' : 'secondary-button'}`}>
             <Zap size={16} className="mr-2"/>{plan.buttonText}
           </button>
+          
         </div>
       ))}
     </div>
@@ -100,7 +105,7 @@ const AuthMarketing = ({ onScrollClick }) => { // A prop agora é onScrollClick
   );
 };
 
-const FeaturesScreen = ({ setView }) => {
+const FeaturesScreen = ({ onNavigate }) => {
   // Reutilizamos os mesmos painéis de antes, talvez com descrições mais completas
   const allFeatures = [
     { icon: <Cpu size={28} />, title: "Geração Inteligente", description: "Crie planos de aula, atividades, simulados e resumos completos em segundos. Nossa IA é treinada para entender as nuances pedagógicas e entregar materiais de alta qualidade que você pode usar imediatamente." },
@@ -126,10 +131,10 @@ const FeaturesScreen = ({ setView }) => {
             Explore as ferramentas que estão revolucionando o planejamento de aulas e a criação de conteúdo pedagógico.
           </p>
           <div className="mt-8 flex justify-center gap-4">
-            <button onClick={() => setView('login')} className="form-button-primary px-8 py-3 text-lg">
+            <button onClick={() => onNavigate('signup')} className="form-button-primary px-8 py-3 text-lg">
               Começar Agora (Grátis)
             </button>
-            <button onClick={() => setView('login')} className="form-button-secondary px-8 py-3 text-lg">
+            <button onClick={() => onNavigate('signup')} className="form-button-secondary px-8 py-3 text-lg">
               Voltar para o Login
             </button>
           </div>
@@ -336,12 +341,12 @@ const InspirationalQuote = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentQuote(quotes[Math.floor(Math.random() * quotes.length)]);
-    }, 7000);
+    }, 6000);
     return () => clearInterval(timer);
   }, [quotes]);
   
   return (
-    <div className="text-center animate-fade-in px-4">
+    <div className="text-center animate-fade-in">
       <p className="text-sm italic text-slate-50">"{currentQuote.text}"</p>
       <p className="text-xs font-bold text-slate-50 mt-2">- {currentQuote.author}</p>
     </div>
@@ -354,10 +359,22 @@ const InspirationalQuote = () => {
 // =================================================================================
 export function AuthScreen() {
   const [authView, setAuthView] = useState('login');
-  const featuresRef = useRef(null); // Criamos uma referência para a seção de features
+  const featuresRef = useRef(null);
+  const topRef = useRef(null); // Referência para a seção do topo
 
-  const handleScrollToFeatures = () => {
-    featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // NOVA FUNÇÃO DE NAVEGAÇÃO CENTRALIZADA
+  // Esta função lida com a rolagem e a mudança de estado de forma coordenada.
+  const handleNavigation = (targetView) => {
+    // Se o alvo for 'login' ou 'signup', primeiro role para o topo.
+    if (targetView === 'login' || targetView === 'signup') {
+      topRef.current?.scrollIntoView({ behavior: 'smooth' });
+      // A mudança de estado acontece aqui, garantindo que a tela correta seja mostrada.
+      setAuthView(targetView);
+    }
+    // Se for para as funcionalidades, apenas role para baixo.
+    else if (targetView === 'features') {
+      featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
   
   const handleGoogleLogin = async () => { try { await signInWithGoogle(); toast.success('Login bem-sucedido!'); } catch (error) { toast.error('Falha no login com Google.'); } };
@@ -368,10 +385,11 @@ export function AuthScreen() {
     // O contêiner principal para a rolagem
     <div>
       {/* SEÇÃO 1: "ACIMA DA DOBRA" - O que o usuário vê primeiro */}
-      <section className="h-screen w-full flex items-center justify-center p-4">
+      {/* Adicionamos a ref do topo a esta seção */}
+      <section ref={topRef} className="h-screen w-full flex items-center justify-center p-4">
         <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-24 items-center">
           
-          {/* --- NOVA ORDEM --- */}
+          {/* --- ORDEM DAS COLUNAS --- */}
           
           {/* COLUNA 1 (ESQUERDA): AUTENTICAÇÃO */}
           <div className="auth-card lg:order-1 order-2">
@@ -397,20 +415,25 @@ export function AuthScreen() {
 
           {/* COLUNA 2 (CENTRAL): MARKETING */}
           <div className="lg:order-2 order-1 auth-marketing-container-center">
-            <AuthMarketing onScrollClick={handleScrollToFeatures} />
+            {/* >>> MUDANÇA 1 <<<
+                Passamos a função handleNavigation com o alvo 'features' */}
+            <AuthMarketing onScrollClick={() => handleNavigation('features')} />
           </div>
 
           {/* COLUNA 3 (DIREITA): PLANOS */}
           <div className="lg:order-3 order-3">
-            <PricingTiers />
+            {/* >>> MUDANÇA 2 <<<
+                Passamos a prop onNavigate em vez de setAuthView */}
+            <PricingTiers onNavigate={handleNavigation} />
           </div>
-          
         </div>
       </section>
 
       {/* SEÇÃO 2: "ABAIXO DA DOBRA" - A página de funcionalidades */}
       <section ref={featuresRef}>
-        <FeaturesScreen />
+        {/* >>> MUDANÇA 3 <<<
+            Passamos a prop onNavigate em vez de setAuthView */}
+        <FeaturesScreen onNavigate={handleNavigation} />
       </section>
     </div>
   );

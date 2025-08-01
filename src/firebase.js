@@ -6,8 +6,11 @@ import {
 } from "firebase/auth";
 import { 
   getFirestore, doc, setDoc, collection, addDoc, query, where, onSnapshot,
-  updateDoc, deleteDoc, serverTimestamp, getDocs, writeBatch
+  updateDoc, deleteDoc, serverTimestamp, getDocs, writeBatch, orderBy // Importe o 'orderBy'
 } from "firebase/firestore";
+
+// Pacote para notificações, útil no tratamento de erros
+import { toast } from 'react-hot-toast';
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -45,10 +48,80 @@ export const resendVerificationEmail = (user) => sendEmailVerification(user);
 
 // Funções do Firestore
 export const createFolder = (ownerId, parentId, name) => addDoc(collection(db, "folders"), { ownerId, parentId, name, createdAt: serverTimestamp() });
-export const getFolders = (ownerId, parentId, callback) => { const q = query(collection(db, "folders"), where("ownerId", "==", ownerId), where("parentId", "==", parentId)); return onSnapshot(q, (snapshot) => callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))); };
-export const getAllUserFolders = async (ownerId) => { const q = query(collection(db, "folders"), where("ownerId", "==", ownerId)); const querySnapshot = await getDocs(q); return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); };
+
+// VERSÃO ATUALIZADA: com ordenação e tratamento de erros
+export const getFolders = (ownerId, parentId, callback) => {
+  try {
+    const q = query(
+      collection(db, "folders"),
+      where("ownerId", "==", ownerId),
+      where("parentId", "==", parentId),
+      orderBy("createdAt", "desc") // Ordena as pastas da mais nova para a mais antiga
+    );
+
+    const unsubscribe = onSnapshot(q,
+      // Callback de sucesso
+      (snapshot) => {
+        const foldersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        callback(foldersData);
+      },
+      // Callback de erro
+      (error) => {
+        console.error("Firestore Error in getFolders:", error);
+        toast.error("Não foi possível carregar as pastas. Verifique o console para detalhes.");
+        // Importante: chamamos o callback com um array vazio para que o estado de 'loading' seja desativado na UI.
+        callback([]);
+      }
+    );
+    return unsubscribe;
+  } catch (error) {
+      console.error("Error creating Firestore query for folders:", error);
+      toast.error("Ocorreu um erro inesperado ao buscar pastas.");
+      callback([]); // Garante que não ficaremos em loading eterno
+      return () => {}; // Retorna uma função vazia para não quebrar a desinscrição
+  }
+};
+
+export const getAllUserFolders = async (ownerId) => {
+  const q = query(collection(db, "folders"), where("ownerId", "==", ownerId));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
 export const saveGeneration = (ownerId, folderId, name, data) => addDoc(collection(db, "generations"), { ownerId, folderId, name, content: data, createdAt: serverTimestamp() });
-export const getGenerationsInFolder = (ownerId, folderId, callback) => { const q = query(collection(db, "generations"), where("ownerId", "==", ownerId), where("folderId", "==", folderId)); return onSnapshot(q, (snapshot) => callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))); };
+
+// VERSÃO ATUALIZADA: com ordenação e tratamento de erros
+export const getGenerationsInFolder = (ownerId, folderId, callback) => {
+  try {
+    const q = query(
+      collection(db, "generations"),
+      where("ownerId", "==", ownerId),
+      where("folderId", "==", folderId),
+      orderBy("createdAt", "desc") // Ordena os arquivos do mais novo para o mais antigo
+    );
+
+    const unsubscribe = onSnapshot(q,
+      // Callback de sucesso
+      (snapshot) => {
+        const generationsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        callback(generationsData);
+      },
+      // Callback de erro
+      (error) => {
+        console.error("Firestore Error in getGenerationsInFolder:", error);
+        toast.error("Não foi possível carregar os arquivos. Verifique o console para detalhes.");
+        callback([]);
+      }
+    );
+    return unsubscribe;
+  } catch (error) {
+      console.error("Error creating Firestore query for generations:", error);
+      toast.error("Ocorreu um erro inesperado ao buscar arquivos.");
+      callback([]);
+      return () => {};
+  }
+};
+
 export const updateDocumentName = (collectionName, docId, newName) => updateDoc(doc(db, collectionName, docId), { name: newName });
 export const moveItem = (collectionName, itemId, newParentId) => updateDoc(doc(db, collectionName, itemId), { folderId: newParentId });
 export const moveFolder = (folderId, newParentId) => updateDoc(doc(db, 'folders', folderId), { parentId: newParentId });
@@ -56,8 +129,11 @@ export const deleteGeneration = (generationId) => deleteDoc(doc(db, "generations
 
 export const deleteFolderAndContents = async (ownerId, folderId) => {
   const batch = writeBatch(db);
+
   const findAllSubItems = async (currentFolderId) => {
     let itemsToDelete = { folders: [currentFolderId], generations: [] };
+
+    // Encontrar subpastas
     const subfoldersQuery = query(collection(db, 'folders'), where('ownerId', '==', ownerId), where('parentId', '==', currentFolderId));
     const subfoldersSnapshot = await getDocs(subfoldersQuery);
     for (const subfolderDoc of subfoldersSnapshot.docs) {
@@ -65,13 +141,18 @@ export const deleteFolderAndContents = async (ownerId, folderId) => {
       itemsToDelete.folders.push(...subItems.folders);
       itemsToDelete.generations.push(...subItems.generations);
     }
+
+    // Encontrar arquivos na pasta atual
     const generationsQuery = query(collection(db, 'generations'), where('ownerId', '==', ownerId), where('folderId', '==', currentFolderId));
     const generationsSnapshot = await getDocs(generationsQuery);
     generationsSnapshot.forEach(genDoc => itemsToDelete.generations.push(genDoc.id));
+    
     return itemsToDelete;
   };
+
   const allItemsToDelete = await findAllSubItems(folderId);
   allItemsToDelete.folders.forEach(id => batch.delete(doc(db, 'folders', id)));
   allItemsToDelete.generations.forEach(id => batch.delete(doc(db, 'generations', id)));
+  
   return batch.commit();
 };
