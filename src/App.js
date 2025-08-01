@@ -4,9 +4,9 @@ import './styles.css';
 import { 
     BookOpen, FileText, HardDrive, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, 
     ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette,
-    Copy, Folder, FolderPlus, MoreVertical, Edit, Trash2 as TrashIcon, Save, FolderClock, Clock,
+    Copy, Folder, FolderPlus, MoreVertical, Edit, Trash2 as TrashIcon, Save, FolderClock, FolderOpen,
     LayoutGrid, List, Home, Move, ArrowRight, Mail,
-    BookAIcon
+
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -375,45 +375,109 @@ const HistoryScreen = ({ setView, loadGeneration }) => {
       toast.success("Item movido com sucesso!");
     } catch (error) { toast.error("Falha ao mover o item."); console.error(error); } finally { setItemToMove(null); }
   };
+  const currentFolder = breadcrumbs[breadcrumbs.length - 1];
+
   return (
     <div className="w-full min-h-screen bg-white flex">
       {itemToMove && <MoveItemModal item={itemToMove} onClose={() => setItemToMove(null)} onConfirmMove={handleConfirmMove} />}
       <HistorySidebar setView={setView} />
-
       <div className="flex-1 flex flex-col h-screen">
+        
+        {/* >>> MUDANÇA 2: O cabeçalho agora é dinâmico <<< */}
         <header className="flex-shrink-0 p-6 border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Meu Drive 
-            <Folder size={24} className="text-slate-900" /> </h1>
-        </div>
+          <div className="relative flex justify-center items-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-slate-800 flex items-center justify-center gap-3">
+                {/* Ícone muda se for a raiz ou uma pasta */}
+                {currentFolder.id === 'root' 
+                  ? <Folder size={24} className="text-slate-700" />
+                  : <FolderOpen size={24} className="text-sky-600" />
+                }
+                <span>{currentFolder.name}</span>
+              </h1>
+            </div>
             <div className="absolute right-0 top-1/2 -translate-y-1/2">
               <AuthHeader />
             </div>
-          <div className="relative flex justify-center items-center">
-            {/* >>> MUDANÇA AQUI: Novo cabeçalho <<< */}
-            <div>
-              <h1 className="text-2xl font-bold text-slate-500">Painel de Organização das Pastas</h1>
-            </div>
-  
           </div>
         </header>
+
         <main className="flex-1 p-6 bg-slate-100 overflow-y-auto">
-          {currentFolderId === 'root' && <InfoBox />}
-          <div className="flex justify-end mb-6">
+          {/* >>> MUDANÇA 3: A barra de breadcrumbs foi aprimorada <<< */}
+          <div className="flex justify-between items-center mb-6 bg-white p-3 rounded-lg shadow-sm border border-slate-200">
+            {/* Breadcrumbs agora dentro de um container destacado */}
+            <nav className="flex items-center text-sm text-slate-600 flex-wrap gap-1.5">
+              {breadcrumbs.map((crumb, index) => (
+                <React.Fragment key={crumb.id}>
+                  <button 
+                    onClick={() => handleBreadcrumbClick(index)} 
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-slate-100 transition-colors"
+                    title={`Ir para ${crumb.name}`}
+                  >
+                    {/* Mostra ícone de casa apenas para o "Meu Drive" */}
+                    {crumb.id === 'root' && <Home size={14} className="text-slate-500" />}
+                    <span className={index === breadcrumbs.length - 1 ? 'font-bold text-slate-800' : ''}>
+                      {crumb.name}
+                    </span>
+                  </button>
+                  {index < breadcrumbs.length - 1 && <span className="text-slate-300 font-bold">›</span>}
+                </React.Fragment>
+              ))}
+            </nav>
+            {/* Botões de Ação */}
             <div className="flex items-center gap-2">
-              <div className="flex items-center bg-slate-200 p-1 rounded-lg"><button onClick={() => setViewType('grid')} className={`p-1.5 rounded ${viewType === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-slate-300'}`}><LayoutGrid size={20} /></button><button onClick={() => setViewType('list')} className={`p-1.5 rounded ${viewType === 'list' ? 'bg-white shadow-sm' : 'hover:bg-slate-300'}`}><List size={20} /></button></div>
-              <button onClick={handleCreateFolder} className="form-button-primary" style={{width: 'auto', padding: '0.5rem 1rem'}}><FolderPlus size={18} className="mr-2"/> Criar Pasta</button>
+              <div className="flex items-center bg-slate-200 p-1 rounded-lg">
+                <button onClick={() => setViewType('grid')} className={`p-1.5 rounded ${viewType === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-slate-300'}`}><LayoutGrid size={20} /></button>
+                <button onClick={() => setViewType('list')} className={`p-1.5 rounded ${viewType === 'list' ? 'bg-white shadow-sm' : 'hover:bg-slate-300'}`}><List size={20} /></button>
+              </div>
+              <button onClick={handleCreateFolder} className="form-button-primary" style={{width: 'auto', padding: '0.5rem 1rem'}}>
+                <FolderPlus size={18} className="mr-2"/> Criar Pasta
+              </button>
             </div>
           </div>
-          {isLoading ? (<div className="flex justify-center items-center h-64"><Loader className="animate-spin text-sky-500" size={40} /></div>) : (
-            <>{viewType === 'grid' ? (<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">{folders.map(folder => (<ItemCard key={folder.id} item={folder} type="folder" onClick={() => handleNavigateToFolder(folder)} onRename={handleRename} onDelete={handleDelete} onMove={handleOpenMoveModal}/>))}{generations.map(gen => (<ItemCard key={gen.id} item={gen} type="file" onClick={() => loadGeneration(gen.content)} onRename={handleRename} onDelete={handleDelete} onMove={handleOpenMoveModal}/>))}</div>) : (<div className="text-center p-8 bg-white rounded-lg">Visualização em lista ainda não implementada.</div>)}
-            {!isLoading && folders.length === 0 && generations.length === 0 && (<div className="text-center py-16 text-slate-500 flex flex-col items-center"><Folder size={64} className="mx-auto mb-4 text-slate-400" /><h3 className="text-2xl font-semibold text-slate-600">Pasta Vazia</h3><p className="mb-6">Comece criando uma nova pasta para organizar seus materiais.</p><button onClick={handleCreateFolder} className="form-button-primary" style={{width: 'auto', padding: '0.75rem 1.5rem'}}><FolderPlus size={18} className="mr-2"/> Criar Nova Pasta</button></div>)}</>
+          
+          {currentFolder.id === 'root' && <InfoBox />}
+
+          <div className="flex justify-end mb-6">
+
+          </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64"><Loader className="animate-spin text-sky-500" size={40} /></div>
+          ) : (
+            <>
+              {viewType === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {folders.map(folder => (<ItemCard key={folder.id} item={folder} type="folder" onClick={() => handleNavigateToFolder(folder)} onRename={handleRename} onDelete={handleDelete} onMove={handleOpenMoveModal}/>))}
+                  {generations.map(gen => (<ItemCard key={gen.id} item={gen} type="file" onClick={() => loadGeneration(gen.content)} onRename={handleRename} onDelete={handleDelete} onMove={handleOpenMoveModal}/>))}
+                </div>
+              ) : (
+                <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-slate-200">
+                      <tr>
+                        <th className="p-4 text-left font-semibold text-slate-600 tracking-wider">Nome</th>
+                        <th className="p-4 text-left font-semibold text-slate-600 tracking-wider">Data de Modificação</th>
+                        <th className="p-4 text-left font-semibold text-slate-600 tracking-wider">Tipo</th>
+                        <th className="p-4 text-right"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {folders.map(folder => (<ItemListRow key={folder.id} item={folder} type="folder" onClick={() => handleNavigateToFolder(folder)} onRename={handleRename} onDelete={handleDelete} onMove={handleOpenMoveModal}/>))}
+                      {generations.map(gen => (<ItemListRow key={gen.id} item={gen} type="file" onClick={() => loadGeneration(gen.content)} onRename={handleRename} onDelete={handleDelete} onMove={handleOpenMoveModal}/>))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {!isLoading && folders.length === 0 && generations.length === 0 && (
+                <div className="text-center py-16 text-slate-500 flex flex-col items-center"><Folder size={64} className="mx-auto mb-4 text-slate-400" /><h3 className="text-2xl font-semibold text-slate-600">Pasta Vazia</h3><p className="mb-6">Comece criando uma nova pasta para organizar seus materiais.</p><button onClick={handleCreateFolder} className="form-button-primary" style={{width: 'auto', padding: '0.75rem 1.5rem'}}><FolderPlus size={18} className="mr-2"/> Criar Nova Pasta</button></div>
+              )}
+            </>
           )}
         </main>
       </div>
     </div>
   );
-}; 
+}
 
 const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade, onClose, isModal }) => {
   const [topic, setTopic] = useState(initialTopic || '');
@@ -702,7 +766,7 @@ const SaveToHistoryModal = ({ result, onClose, onSave }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="bg-white rounded-2xl p-8 shadow-2xl relative w-full max-w-lg">
-        <h2 className="text-2xl font-bold text-slate-900 mb-4">Salvar no Histórico</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">Salvar em Meu Drive</h2>
         <div className="space-y-4">
           <div>
             <label className="form-label">Nome do Arquivo</label>
