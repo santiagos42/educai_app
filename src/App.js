@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import './styles.css';
 // Ícones
 import { 
-    BookOpen, FileText, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, 
+    BookOpen, FileText, HardDrive, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, 
     ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette,
     Copy, Folder, FolderPlus, MoreVertical, Edit, Trash2 as TrashIcon, Save, FolderClock, Clock,
-    LayoutGrid, List, Home, Move, ArrowRight, Mail
+    LayoutGrid, List, Home, Move, ArrowRight, Mail,
+    BookAIcon
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -228,6 +229,7 @@ const DropdownMenu = ({ onRename, onDelete, onMove }) => {
 };
 
 const HistorySidebar = ({ setView }) => {
+  const logoUrl = process.env.PUBLIC_URL + '/logo900.png';
   const tools = [
     { id: 'activityGenerator', name: 'Gerar Atividades Avaliativas', icon: <PenSquare /> },
     { id: 'planningAssistant', name: 'Assistente de Planejamento', icon: <CalendarDays /> },
@@ -238,21 +240,23 @@ const HistorySidebar = ({ setView }) => {
   ];
   return (
     <aside className="w-72 bg-slate-50 p-4 border-r border-slate-200 hidden md:flex flex-col">
-      <div className="text-2xl font-bold text-slate-800 p-2 mb-4" style={{ fontFamily: "'Patrick Hand', cursive" }}>EducAI</div>
-      <div className="mb-6">
-
+      {/* >>> MUDANÇA AQUI: Adiciona a logo e o slogan <<< */}
+      <div className="px-2 mb-8">
+        <img src={logoUrl} alt="EducAI Logo" className="w-25 h-25 mx-auto mb-2" />
+        <h2 className="text-1xl font-bold text-center text-slate-600" style={{ fontFamily: "'Patrick Hand', cursive" }}>A nossa missão é otimizar o seu trabalho.</h2>
       </div>
-        <div className="mb-6">
-          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Navegação</h3>
-          <ul>
-            <li>
-              <button onClick={() => setView('home')} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors">
-                <Home size={20} />
-                Painel Principal
-              </button>
-            </li>
-          </ul>
-        </div>
+
+      <div className="mb-6">
+        <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Navegação</h3>
+        <ul>
+          <li>
+            <button onClick={() => setView('home')} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors">
+              <Home size={20} />
+              Painel Principal
+            </button>
+          </li>
+        </ul>
+      </div>
 
       <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Ferramentas de IA</h3>
       <nav className="flex-grow overflow-y-auto">
@@ -267,7 +271,38 @@ const HistorySidebar = ({ setView }) => {
           ))}
         </ul>
       </nav>
+
+      {/* >>> MUDANÇA AQUI: Adiciona o componente de citação <<< */}
+      <div className="mt-auto">
+        <InspirationalQuoteDashboard/>
+      </div>
     </aside>
+  );
+};
+
+const InspirationalQuoteDashboard = () => {
+  const quotes = useMemo(() => [
+    { text: "A tarefa do educador moderno não é derrubar florestas, mas irrigar desertos.", author: "C.S. Lewis" },
+    { text: "A educação é a arma mais poderosa que você pode usar para mudar o mundo.", author: "Nelson Mandela" },
+    { text: "Ensinar não é transferir conhecimento, mas criar as possibilidades para a sua própria produção ou a sua construção.", author: "Paulo Freire" },
+    { text: "Um bom professor explica. O professor superior demonstra. O grande professor inspira.", author: "William Arthur Ward" }
+  ], []);
+
+  const [currentQuote, setCurrentQuote] = useState(quotes[0]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentQuote(quotes[Math.floor(Math.random() * quotes.length)]);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, [quotes]);
+  
+  return (
+    // Adicionamos classes CSS para estilizar o container
+    <div className="inspirational-quote-container animate-fade-in">
+      <p className="quote-text">"{currentQuote.text}"</p>
+      <p className="quote-author">- {currentQuote.author}</p>
+    </div>
   );
 };
 
@@ -344,12 +379,23 @@ const HistoryScreen = ({ setView, loadGeneration }) => {
     <div className="w-full min-h-screen bg-white flex">
       {itemToMove && <MoveItemModal item={itemToMove} onClose={() => setItemToMove(null)} onConfirmMove={handleConfirmMove} />}
       <HistorySidebar setView={setView} />
+
       <div className="flex-1 flex flex-col h-screen">
-        <header className="flex-shrink-0 flex justify-between items-center p-4 border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-          <div className="flex items-center text-sm md:text-base text-slate-600 flex-wrap">
-            {breadcrumbs.map((crumb, index) => (<React.Fragment key={crumb.id}><button onClick={() => handleBreadcrumbClick(index)} className={`hover:underline ${index === breadcrumbs.length - 1 ? 'font-bold text-slate-800' : ''}`}>{crumb.name}</button>{index < breadcrumbs.length - 1 && <span className="mx-2">/</span>}</React.Fragment>))}
+        <header className="flex-shrink-0 p-6 border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Meu Drive 
+            <Folder size={24} className="text-slate-900" /> </h1>
+        </div>
+            <div className="absolute right-0 top-1/2 -translate-y-1/2">
+              <AuthHeader />
+            </div>
+          <div className="relative flex justify-center items-center">
+            {/* >>> MUDANÇA AQUI: Novo cabeçalho <<< */}
+            <div>
+              <h1 className="text-2xl font-bold text-slate-500">Painel de Organização das Pastas</h1>
+            </div>
+  
           </div>
-          <AuthHeader />
         </header>
         <main className="flex-1 p-6 bg-slate-100 overflow-y-auto">
           {currentFolderId === 'root' && <InfoBox />}
@@ -584,6 +630,10 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
 
 const WhiteboardHomeScreen = ({ setView }) => {
   const { currentUser } = useAuth();
+  
+  // Define o caminho da logo. Confirme se o nome do arquivo está correto.
+  const logoUrl = process.env.PUBLIC_URL + '/logohome.png';
+
   const features = [{ id: 'activityGenerator', icon: <PenSquare />, title: "Gerar Atividades Avaliativas", description: "Crie avaliações, exercícios, simulados e mais." }, { id: 'planningAssistant', icon: <CalendarDays />, title: "Assistente de Planejamento", description: "Organize sua semana, seu bimestre, seu ano letivo.", isHighlighted: true }, { id: 'lessonPlanGenerator', icon: <ClipboardList />, title: "Criar Planos de Aula", description: "Elabore planos de aula completos e alinhados à BNCC." }, { id: 'summaryGenerator', icon: <BookOpen />, title: "Gerar Resumos Didáticos", description: "Elabore resumos didáticos de qualidade sobre diversos temas." }, { id: 'caseStudyGenerator', icon: <FileQuestion />, title: "Criar Estudos de Caso", description: "Gere cenários práticos que abordam de forma brilhante qualquer assunto.", isHighlighted: true }, { id: 'presentationGenerator', icon: <Palette />, title: "Gerar Roteiro de Slides", description: "Crie roteiros para apresentações." }];
   const noteColors = useMemo(() => { return [{ bg: 'bg-yellow-200/80', border: 'border-yellow-400' }, { bg: 'bg-sky-200/80', border: 'border-sky-400' }, { bg: 'bg-green-200/80', border: 'border-green-400' }, { bg: 'bg-pink-200/80', border: 'border-pink-400' }, { bg: 'bg-purple-200/80', border: 'border-purple-400' }, { bg: 'bg-orange-200/80', border: 'border-orange-400' }].sort(() => 0.5 - Math.random()); }, []);
 
@@ -592,16 +642,35 @@ const WhiteboardHomeScreen = ({ setView }) => {
       <div className="absolute top-0 right-0 p-6 z-20"><AuthHeader /></div>
       <AnimatedBackground />
       <div className="relative z-10 flex flex-col items-center w-full max-w-7xl mx-auto">
-        <div className="text-center mb-10"><h1 className="text-6xl md:text-7xl font-bold text-slate-800" style={{ fontFamily: "'Patrick Hand', cursive" }}>EducAI{currentUser && !currentUser.isAnonymous && (<span className="text-4xl md:text-5xl block mt-2">Assistente de {currentUser.displayName ? currentUser.displayName.split(' ')[0] : currentUser.email.split('@')[0]}</span>)}{(!currentUser || currentUser.isAnonymous) && (<span className="text-4xl md:text-5xl block mt-2">Assistente do Professor</span>)}</h1><p className="text-lg md:text-xl text-slate-600 mt-2 font-sans">Sua assistente de IA para revolucionar a educação.</p></div>
         
-        {/* LAYOUT INVERTIDO CORRIGIDO */}
+        {/* >>> MUDANÇA PRINCIPAL AQUI <<< */}
+        <div className="text-center mb-10 md:mb-12">
+          {/* 1. Inserimos a imagem da logo */}
+          <img
+            src={logoUrl}
+            alt="EducAI Logo"
+            className="mx-auto w-48 h-48 md:w-60 md:h-60 drop-shadow-lg"
+          />
+
+          {/* 2. Transformamos o subtítulo em uma saudação principal */}
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mt-4" style={{ fontFamily: "'Patrick Hand', cursive" }}>
+            {currentUser && !currentUser.isAnonymous && currentUser.displayName
+              ? `Olá, ${currentUser.displayName.split(' ')[0]}!`
+              : 'Seu Assistente Pessoal de IA'
+            }
+          </h1>
+
+          {/* 3. Mantemos o slogan */}
+          <p className="text-lg md:text-xl text-slate-500 mt-2 font-sans">
+            Aproveite as funcionalidades da nossa plataforma para criar, organizar e compartilhar conteúdos educacionais de forma rápida e eficiente.
+          </p>
+        </div>
+        
+        {/* O resto do layout permanece o mesmo */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Coluna Esquerda (NOVA): Preview do Drive */}
           <div className="animate-fade-in-up">
             <DrivePreview setView={setView} />
           </div>
-
-          {/* Coluna Direita (NOVA): Ferramentas de IA */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {features.map((feature, index) => (
               <div key={feature.id} className="animate-fade-in-up" style={{ animationDelay: `${150 * (index + 1)}ms` }}>

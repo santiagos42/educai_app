@@ -471,3 +471,48 @@
         display: flex;
         flex-direction: column;
         }
+        .inspirational-quote-container {
+          background-color: #e0f2fe; /* bg-sky-100 */
+          border-left: 4px solid #38bdf8; /* border-sky-400 */
+          padding: 1rem;
+          border-radius: 0 0.5rem 0.5rem 0;
+          transition: all 0.3s ease-in-out;
+        }
+
+        .quote-text {
+          font-style: italic;
+          color: #0c4a6e; /* text-sky-800 */
+          font-size: 0.875rem; /* 14px */
+          line-height: 1.5;
+        }
+
+        .quote-author {
+          font-weight: 600;
+          color: #075985; /* text-sky-700 */
+          font-size: 0.8rem; /* ~13px */
+          text-align: right;
+          margin-top: 0.75rem;
+        }
+
+        /* Opcional: Adicionar um ícone decorativo como você pediu */
+        .inspirational-quote-container {
+          position: relative;
+          overflow: hidden; /* Para o ícone não vazar */
+        }
+
+        .inspirational-quote-container::before {
+          content: '“'; /* Usando aspas como ícone */
+          position: absolute;
+          top: -10px;
+          left: 0px;
+          font-family: 'Times New Roman', serif;
+          font-size: 4rem; /* 64px */
+          color: #bae6fd; /* bg-sky-200 */
+          z-index: 0;
+          line-height: 1;
+        }
+
+        .inspirational-quote-container p {
+          position: relative;
+          z-index: 1; /* Garante que o texto fique acima do ícone */
+        }
