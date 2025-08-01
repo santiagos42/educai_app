@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import './Auth.css';
 // Ícones
 import { 
     BookOpen, FileText, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, 
     ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette,
     Copy, Folder, FolderPlus, MoreVertical, Edit, Trash2 as TrashIcon, Save, FolderClock, Clock,
-    LayoutGrid, List, Home, Move, ArrowRight, ShieldCheck, Library, MessageSquare, Sparkles, Rocket, Mail
+    LayoutGrid, List, Home, Move, ArrowRight, Mail
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -322,76 +323,6 @@ const ModernAuthBackground = () => (
     <div className="absolute inset-0 w-full h-full -z-10"><div className="auth-shape auth-shape-1"></div><div className="auth-shape auth-shape-2"></div></div>
 );
 
-const FeaturesScreen = ({ setView }) => {
-  // Reutilizamos os mesmos painéis de antes, talvez com descrições mais completas
-  const allFeatures = [
-    { icon: <Cpu size={28} />, title: "Geração Inteligente", description: "Crie planos de aula, atividades, simulados e resumos completos em segundos. Nossa IA é treinada para entender as nuances pedagógicas e entregar materiais de alta qualidade que você pode usar imediatamente." },
-    { icon: <Clock size={28} />, title: "Foco no que Importa", description: "A maior queixa dos professores é a falta de tempo. Reduza horas de trabalho burocrático e planejamento em minutos. Deixe a IA cuidar das tarefas repetitivas para que você possa se dedicar ao que ama: ensinar e interagir com seus alunos." },
-    { icon: <FolderClock size={28} />, title: "Organização Total", description: "Diga adeus às pastas perdidas no seu computador. Gerencie todos os seus materiais em um Drive intuitivo e seguro, organizado por turma, matéria ou projeto. Acesse de qualquer lugar, a qualquer hora." },
-    { icon: <GraduationCap size={28} />, title: "Alinhamento com a BNCC", description: "Garanta uma prática pedagógica sempre atualizada. Gere conteúdo que já considera as habilidades e competências da Base Nacional Comum Curricular, facilitando seu planejamento e garantindo a relevância do ensino." },
-    { icon: <Palette size={28} />, title: "Formatos Profissionais", description: "Exporte seus conteúdos para PDF e DOCX com um único clique. Os documentos já saem com formatação limpa e cabeçalhos profissionais, prontos para imprimir e entregar aos seus alunos ou coordenação." },
-    { icon: <MessageSquare size={28} />, title: "Feedback Inteligente", description: "Crie gabaritos comentados e sugestões de respostas para suas atividades em segundos. Facilite o processo de correção e forneça retornos mais ricos e construtivos para o desenvolvimento dos estudantes." },
-    { icon: <Sparkles size={28} />, title: "Aulas Mais Dinâmicas", description: "Saia da rotina. Gere estudos de caso, roteiros para debates e projetos que capturam a atenção dos alunos, promovem o pensamento crítico e tornam o aprendizado uma experiência memorável." },
-    { icon: <ShieldCheck size={28} />, title: "Seguro e Acessível", description: "Sua privacidade e a segurança dos seus dados são nossa prioridade máxima. Utilizamos as melhores práticas de segurança para que você possa focar no que importa sem preocupações." },
-    { icon: <Library size={28} />, title: "Biblioteca de Recursos", description: "Em breve: acesse um vasto banco de materiais gerados e validados pela nossa comunidade de educadores. Inspire-se com o trabalho de outros professores e compartilhe suas próprias criações." },
-    { icon: <Rocket size={28} />, title: "Suporte Contínuo", description: "O EducAI é uma plataforma viva, em constante evolução. Lançamos novas ferramentas e atualizações regularmente, muitas delas baseadas diretamente no feedback de professores como você." }
-  ];
-
-  return(
-    <div className="w-full min-h-screen bg-slate-900 text-white p-4 sm:p-8 lg:p-12 animate-fade-in">
-      <div className="max-w-7xl mx-auto">
-        {/* Cabeçalho e CTA */}
-        <header className="text-center mb-12 md:mb-20">
-          <h1 className="text-4xl md:text-6xl font-bold" style={{ fontFamily: "'Patrick Hand', cursive" }}>
-            Uma Plataforma Completa Para o <span className="text-sky-400">Educador Moderno</span>
-          </h1>
-          <p className="mt-4 max-w-3xl mx-auto text-lg text-slate-300">
-            Explore as ferramentas que estão revolucionando o planejamento de aulas e a criação de conteúdo pedagógico.
-          </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <button onClick={() => setView('login')} className="form-button-primary px-8 py-3 text-lg">
-              Começar Agora (Grátis)
-            </button>
-            <button onClick={() => setView('login')} className="form-button-secondary px-8 py-3 text-lg">
-              Voltar para o Login
-            </button>
-          </div>
-        </header>
-
-        {/* Grid de Funcionalidades */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {allFeatures.map((feature, index) => (
-            <div key={index} className="feature-card-detailed">
-              <div className="feature-icon">{feature.icon}</div>
-              <h3 className="feature-title-detailed">{feature.title}</h3>
-              <p className="feature-description-detailed">{feature.description}</p>
-            </div>
-          ))}
-        </div>
-        
-        {/* Seção de Marketing Adicional: FAQ */}
-        <section className="mt-20 max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">Perguntas Frequentes</h2>
-          <div className="space-y-4">
-            <details className="faq-item">
-              <summary>O plano Freemium é grátis para sempre?</summary>
-              <p>Sim! O plano Freemium permite que você utilize as funcionalidades essenciais da plataforma com um limite mensal de gerações, sem custo e sem necessidade de cartão de crédito.</p>
-            </details>
-            <details className="faq-item">
-              <summary>Meus dados e materiais estão seguros?</summary>
-              <p>Absolutamente. A segurança e privacidade são nossa maior prioridade. Utilizamos criptografia de ponta e as melhores práticas do mercado para proteger todas as informações em sua conta.</p>
-            </details>
-             <details className="faq-item">
-              <summary>Posso cancelar meu plano a qualquer momento?</summary>
-              <p>Sim. Você tem total controle sobre sua assinatura. O cancelamento pode ser feito de forma simples e rápida diretamente no seu painel de controle, sem burocracia.</p>
-            </details>
-          </div>
-        </section>
-
-      </div>
-    </div>
-  );
-};
 
 const HistoryScreen = ({ setView, loadGeneration }) => {
   const { currentUser } = useAuth(); const [folders, setFolders] = useState([]); const [generations, setGenerations] = useState([]); const [currentFolderId, setCurrentFolderId] = useState('root'); const [breadcrumbs, setBreadcrumbs] = useState([{ id: 'root', name: 'Meu Drive' }]); const [isLoading, setIsLoading] = useState(true); const [viewType, setViewType] = useState('grid'); const [itemToMove, setItemToMove] = useState(null);
@@ -1545,8 +1476,7 @@ function AppContent() {
 }
 
 function AppGatekeeper() {
-  const { currentUser, loading, reloadUser } = useAuth(); // Pode ser necessário adicionar reloadUser ao seu AuthContext
-  const [pageView, setPageView] = useState('auth'); 
+  const { currentUser, loading } = useAuth();
 
   if (loading) {
     return (
@@ -1556,227 +1486,24 @@ function AppGatekeeper() {
     );
   }
   
-  // --- LÓGICA DE TRAVA DE ACESSO ---
   if (currentUser) {
-    // Verifica se o usuário logou com e-mail/senha
-    const isEmailUser = currentUser.providerData.some(p => p.providerId === 'password');
-    
-    // SE for um usuário de e-mail E o e-mail NÃO estiver verificado...
-    if (isEmailUser && !currentUser.emailVerified) {
-      // ...mostre a tela de verificação e bloqueie o acesso ao resto do app.
-      return (
-        <div className="w-full min-h-screen auth-modern-bg flex items-center justify-center p-4 relative">
-          <ModernAuthBackground />
-          <VerifyEmailScreen />
-        </div>
-      );
-    }
-
-    // Se passou na verificação (ou é um usuário do Google/Convidado), mostre o conteúdo.
+    // ... (Lógica de verificação de e-mail pode ir aqui, se desejar) ...
     return <AppContent />;
   }
 
-  // --- LÓGICA PARA USUÁRIO NÃO-LOGADO ---
-  if (pageView === 'features') {
-    return <FeaturesScreen setView={setPageView} />;
-  }
-
+  // Se o usuário não está logado, simplesmente renderize o AuthScreen.
+  // Ele agora gerencia toda a experiência de autenticação e funcionalidades.
   return (
-    <div className="w-full min-h-screen auth-modern-bg flex items-center justify-center p-4 relative">
-      <ModernAuthBackground />
-      <AuthScreen setView={setPageView} />
+    <div className="auth-modern-bg">
+      <AuthScreen />
     </div>
   );
 }
+
 export default function App() {
   return (
     <AuthProvider>
       <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 3000, style: { background: '#363636', color: '#fff' } }} />
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Patrick+Hand&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-        .whiteboard-bg { background-color: #f8fafc; background-image: linear-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px), linear-gradient(to right, rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 2rem 2rem; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in-up { opacity: 0; animation: fadeInUp 0.6s ease-out forwards; }
-        @keyframes slow-drift { 0% { transform: translateY(20px) translateX(-20px) rotate(0deg); opacity: 0; } 25% { opacity: 1; } 75% { opacity: 1; } 100% { transform: translateY(-20px) translateX(20px) rotate(15deg); opacity: 0; } }
-        .animate-slow-drift { animation: slow-drift infinite ease-in-out; }
-        .form-input { width: 100%; background-color: rgba(241, 245, 249, 0.5); border: 1px solid #cbd5e1; color: #1e293b; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: border-color 0.2s, box-shadow 0.2s; font-size: 1rem; }
-        .form-input:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4); }
-        .form-input::placeholder { color: #64748b; }
-        .form-input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.5); }
-        select.form-input { cursor: pointer; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-        .form-label { display: block; font-size: 0.875rem; color: #475569; margin-bottom: 0.5rem; font-weight: 600; }
-        .form-button-primary { display: flex; align-items: center; justify-content: center; width: 100%; background: linear-gradient(to right, #38bdf8, #3b82f6); color: white; font-weight: bold; padding: 0.75rem; border-radius: 0.5rem; border: none; cursor: pointer; transition: all 0.3s; transform: perspective(1px) translateZ(0); }
-        .form-button-primary:hover:not(:disabled) { opacity: 0.9; box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.4); }
-        .form-button-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-        .form-button-secondary { display: flex; align-items: center; justify-content: center; width: 100%; background-color: #e2e8f0; color: #334155; font-weight: 600; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; cursor: pointer; transition: background-color 0.2s; }
-        .form-button-secondary:hover:not(:disabled) { background-color: #cbd5e1; }
-        .form-button-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
-        .form-button-tertiary { display: flex; align-items: center; justify-content: center; width: 100%; background-color: transparent; color: #475569; font-weight: 600; padding: 0.75rem; border-radius: 0.5rem; border: none; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
-        .form-button-tertiary:hover { background-color: rgba(203, 213, 225, 0.5); color: #1e293b; }
-        .feature-card-glow-border { border: 1px solid #e2e8f0; }
-        .feature-card-glow-border:hover { border-color: #94a3b8; }
-        .a4-preview-container { box-shadow: inset 0 2px 8px rgba(0,0,0,0.1); }
-        .a4-preview { width: 210mm; min-height: 297mm; height: auto; margin: 0 auto; transform-origin: top center; transition: transform 0.3s; }
-        @media (max-width: 860px) { .a4-preview { transform: scale(0.8); } }
-        @media (max-width: 640px) { .a4-preview-container { padding: 0.5rem; } .a4-preview { transform: scale(0.5); min-height: auto; } }
-        .document-font { font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; text-align: justify; }
-        .section-title { font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 8px; font-size: 14pt; }
-        .question-block, .break-inside-avoid { break-inside: avoid; }
-        .editable-content:focus { outline: 1px solid #38bdf8; background-color: rgba(56, 189, 248, 0.1); }
-        .header-table { width: 100%; border-collapse: collapse; border: 1.5px solid black; font-family: 'Times New Roman', Times, serif; font-size: 11pt; margin-bottom: 20px; }
-        .header-table th, .header-table td { border: 1px solid black; padding: 4px 8px; vertical-align: middle; }
-        .header-table th { text-align: center; font-weight: bold; padding: 8px; }
-        .header-table td { text-align: left; }
-        .header-tip { font-size: 9pt; color: #475569; text-align: center; margin-top: 15px; padding: 0 10px; font-family: 'Inter', sans-serif; line-height: 1.4; }
-        .editable-header-space { margin-bottom: 20px; border: 1px dashed transparent; transition: border-color 0.2s, background-color 0.2s; }
-        .editable-header-space:focus-within { border-color: #cbd5e1; background-color: rgba(248, 250, 252, 0.5); }
-        .two-column-layout { column-count: 2; column-gap: 2rem; }
-        @media (max-width: 640px) { .two-column-layout { column-count: 1; } }
-        .presentation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-        .slide-preview { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; break-inside: avoid; }
-        .slide-header { display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid #cbd5e1; padding-bottom: 0.5rem; margin-bottom: 0.75rem; }
-        .slide-number { font-weight: bold; background-color: #3b82f6; color: white; border-radius: 9999px; width: 1.75rem; height: 1.75rem; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .slide-title { font-weight: bold; font-size: 1.1rem; flex-grow: 1; }
-        .slide-content { list-style-position: inside; list-style-type: disc; padding-left: 0.25rem; font-size: 0.9rem; color: #334155; }
-        .sug-button { display: inline-flex; align-items: center; background-color: #e2e8f0; color: #334155; font-size: 0.8rem; font-weight: 600; padding: 0.3rem 0.6rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
-        .sug-button:hover { background-color: #cbd5e1; border-color: #94a3b8; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .copy-button { margin-left: 0.5rem; padding: 0.3rem; border-radius: 9999px; color: #64748b; background-color: transparent; border: none; cursor: pointer; transition: all 0.2s ease-in-out; display: inline-flex; align-items: center; justify-content: center; }
-        .copy-button:hover { color: #1e293b; background-color: #e2e8f0; transform: scale(1.1); }
-        .slide-header .copy-button { margin-left: auto; }
-        .content-header-with-copy { position: relative; display: flex; justify-content: center; align-items: center; padding: 0 2rem; }
-        .content-header-with-copy h2 { flex-grow: 1; }
-        .content-header-with-copy .copy-button { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
-        .auth-container { position: absolute; top: 1.5rem; right: 1.5rem; z-index: 20; }
-        .user-info { display: flex; align-items: center; gap: 0.75rem; background-color: rgba(255, 255, 255, 0.8); padding: 0.5rem; border-radius: 9999px; backdrop-filter: blur(4px); border: 1px solid #e2e8f0; }
-        .user-name { font-weight: 600; font-size: 0.875rem; color: #334155; }
-        .user-avatar { width: 2.5rem; height: 2.5rem; border-radius: 9999px; border: 2px solid white; }
-        .user-avatar-guest { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; background-color: #e2e8f0; color: #64748b; border-radius: 9999px; }
-        .logout-button { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 9999px; color: #64748b; background-color: #f1f5f9; border: none; cursor: pointer; transition: all 0.2s; }
-        .logout-button:hover { background-color: #e2e8f0; color: #1e293b; }
-        .auth-form-container {
-            /* Efeito de Vidro Fosco */
-            background-color: rgba(255, 255, 255, 0.1); /* Branco com alta transparência */
-            backdrop-filter: blur(24px); /* O desfoque do que está atrás */
-            -webkit-backdrop-filter: blur(24px); /* Suporte para Safari */
-            border: 1px solid rgba(255, 255, 255, 0.15); /* Uma borda sutil para definir o limite */
-            
-            /* Estilos que já existiam */
-            padding: 2.5rem; 
-            border-radius: 1.25rem; /* Um pouco mais arredondado */
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2); /* Sombra um pouco mais forte para dar profundidade */
-            width: 100%; 
-            max-width: 400px; 
-            text-align: center; 
-        }
-        .auth-title { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 1.5rem; }
-        .input-group { position: relative; margin-bottom: 1rem; }
-        .input-group input { width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 1rem; }
-        .input-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
-        .full-width { width: 100%; }
-        .toggle-auth-view { background: none; border: none; color: #3b82f6; font-size: 0.875rem; cursor: pointer; margin-top: 1rem; }
-        .separator { margin: 1.5rem 0; font-size: 0.875rem; color: #64748b; display: flex; align-items: center; }
-        .separator::before, .separator::after { content: ''; flex-grow: 1; height: 1px; background-color: #e2e8f0; }
-        .separator::before { margin-right: 1rem; }
-        .separator::after { margin-left: 1rem; }
-        .google-button { display: flex; align-items: center; justify-content: center; width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background-color: white; font-weight: 600; cursor: pointer; margin-bottom: 0.75rem; transition: background-color 0.2s; }
-        .google-button:hover { background-color: #f8fafc; }
-        .google-icon { width: 1.25rem; height: 1.25rem; margin-right: 0.75rem; }
-        .guest-button { width: 100%; padding: 0.75rem; border: none; border-radius: 0.5rem; background-color: #f1f5f9; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
-        .guest-button:hover { background-color: #e2e8f0; }
-        .guest-icon { width: 1.25rem; height: 1.25rem; margin-right: 0.75rem; }
-        .auth-modern-bg {
-          background-color: #0c0a1a; /* Um roxo/azul bem escuro */
-          background-image: radial-gradient(circle at 10% 20%, rgba(30, 58, 138, 0.4) 0%, transparent 40%),
-                            radial-gradient(circle at 90% 80%, rgba(107, 33, 168, 0.3) 0%, transparent 40%);
-          overflow: hidden;
-          position: relative;
-        }
-
-        @keyframes auth-drift {
-          0% { transform: translateY(0px) translateX(0px); }
-          50% { transform: translateY(-20px) translateX(10px); }
-          100% { transform: translateY(0px) translateX(0px); }
-        }
-
-        .auth-shape {
-          position: absolute;
-          filter: blur(80px); /* O efeito "blob" vem daqui */
-          animation: auth-drift 20s infinite ease-in-out alternate;
-        }
-
-        .auth-shape-1 {
-          width: 400px;
-          height: 400px;
-          border-radius: 9999px;
-          background: rgba(59, 130, 246, 0.3); /* Azul */
-          top: -100px;
-          left: -100px;
-        }
-
-        .auth-shape-2 {
-          width: 300px;
-          height: 300px;
-          border-radius: 9999px;
-          background: rgba(168, 85, 247, 0.3); /* Roxo */
-          bottom: -50px;
-          right: -50px;
-          animation-delay: -10s;
-        }
-
-        /* Adicione estas novas regras à sua tag <style> no App.js */
-
-        /* --- Estilos para a Página de Funcionalidades --- */
-        .feature-card-detailed {
-          background: linear-gradient(145deg, #1e293b, #111827); /* bg-slate-800 to bg-gray-900 */
-          border: 1px solid #334155; /* border-slate-700 */
-          border-radius: 1rem;
-          padding: 2rem;
-          transition: all 0.3s ease;
-        }
-        .feature-card-detailed:hover {
-          transform: scale(1.03);
-          border-color: #38bdf8; /* border-sky-400 */
-          box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
-        }
-        .feature-icon {
-          color: #38bdf8;
-          margin-bottom: 1rem;
-        }
-        .feature-title-detailed {
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin-bottom: 0.75rem;
-        }
-        .feature-description-detailed {
-          color: #cbd5e1; /* text-slate-300 */
-          line-height: 1.6;
-        }
-        .faq-item {
-          background-color: #1e293b;
-          border: 1px solid #334155;
-          border-radius: 0.5rem;
-          padding: 1rem;
-        }
-        .faq-item summary {
-          font-weight: 600;
-          cursor: pointer;
-          list-style: none; /* Remove default marker */
-        }
-        .faq-item summary::-webkit-details-marker {
-          display: none; /* Remove default marker for Chrome */
-        }
-        .faq-item p {
-          margin-top: 1rem;
-          color: #cbd5e1;
-          border-top: 1px solid #334155;
-          padding-top: 1rem;
-        }
-        /* --- Estilo Base para Ambos os Cartões --- */
-
-      `}</style>
       <main>
         <AppGatekeeper />
       </main>
