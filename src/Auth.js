@@ -373,7 +373,7 @@ export function AuthScreen() {
   
   const handleGoogleLogin = async () => { try { await signInWithGoogle(); toast.success('Login bem-sucedido!'); } catch (error) { toast.error('Falha no login com Google.'); } };
   const handleGuestLogin = async () => { try { await signInAsGuest(); toast.success('Entrando como convidado!'); } catch (error) { toast.error('Falha ao entrar como convidado.'); } };
-  const titles = { login: "Bem-vindo(a)!", signup: "Crie sua Conta", forgotPassword: "Recuperar Senha" };
+  const titles = { login: "Acesse sua conta ou Registre-se", signup: "Crie sua Conta", forgotPassword: "Recuperar Senha" };
 
   return (
     <div>
