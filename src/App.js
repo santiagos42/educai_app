@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import './styles.css';
 // Ícones
 import { 
-    BookOpen, FileText, HardDrive, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, 
+    BookOpen, FileText, Search, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, 
     ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette,
     Copy, Folder, FolderPlus, MoreVertical, Edit, Trash2 as TrashIcon, Save, FolderClock, FolderOpen,
     LayoutGrid, List, Home, Move, ArrowRight, Mail,
@@ -29,6 +29,25 @@ import jsPDF from 'jspdf';
 // =================================================================================
 // SEÇÃO DE COMPONENTES DE UI E CONTEÚDO
 // =================================================================================
+const toolIconMap = {
+  summary: <BookOpen size={48} className="text-green-500" />,
+  activity: <PenSquare size={48} className="text-sky-500" />,
+  lessonPlan: <ClipboardList size={48} className="text-pink-500" />,
+  planningAssistant: <CalendarDays size={48} className="text-purple-500" />,
+  caseStudy: <Search size={48} className="text-indigo-500" />,
+  presentation: <Palette size={48} className="text-orange-500" />,
+  default: <FileText size={48} className="text-slate-500" />
+};
+
+const toolIconMapSmall = {
+  summary: <BookOpen size={24} className="text-green-500" />,
+  activity: <PenSquare size={24} className="text-sky-500" />,
+  lessonPlan: <ClipboardList size={24} className="text-pink-500" />,
+  planningAssistant: <CalendarDays size={24} className="text-purple-500" />,
+  caseStudy: <Search size={48} className="text-indigo-500" />,
+  presentation: <Palette size={24} className="text-orange-500" />,
+  default: <FileText size={24} className="text-slate-500" />
+};
 
 const CopyButton = ({ textToCopy, title = "Copiar conteúdo" }) => {
   const handleCopy = () => {
@@ -306,14 +325,77 @@ const InspirationalQuoteDashboard = () => {
   );
 };
 
+
 const ItemCard = ({ item, type, onClick, onRename, onDelete, onMove }) => {
-  const isFolder = type === 'folder'; const icon = isFolder ? <Folder size={48} className="text-yellow-500" fill="rgba(234, 179, 8, 0.2)" /> : <FileText size={48} className="text-sky-500" />;
-  return (<div onClick={onClick} className="group relative flex flex-col items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer aspect-square"><div className="mb-2">{icon}</div><p className="text-center text-sm font-semibold text-slate-700 break-all w-full px-1 truncate" title={item.name}>{item.name}</p><div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}><DropdownMenu onRename={() => onRename(type, item.id, item.name)} onDelete={() => onDelete(type, item.id, item.name)} onMove={() => onMove(type, item.id, item.name)} /></div></div>);
+  const isFolder = type === 'folder';
+  let icon; // Vamos declarar o ícone aqui
+
+  // Apenas para arquivos, vamos fazer nosso diagnóstico detalhado
+  if (type === 'file') {
+    const keyToFind = item.type;
+    const foundIcon = toolIconMap[keyToFind];
+
+    // ESTE É O CONSOLE.LOG MAIS IMPORTANTE
+    console.group(`DIAGNÓSTICO PARA O ARQUIVO: ${item.name}`);
+    console.log("1. A chave que estou usando é:", `'${keyToFind}'`);
+    console.log("2. O dicionário (toolIconMap) em que estou procurando é:", toolIconMap);
+    console.log("3. O resultado da busca (toolIconMap[chave]) foi:", foundIcon);
+    console.groupEnd();
+
+    // Lógica final para definir o ícone
+    if (foundIcon) {
+      icon = foundIcon; // Se encontrou, usa o ícone
+    } else {
+      icon = toolIconMap.default; // Senão, usa o padrão
+    }
+  } else {
+    // Se for uma pasta, a lógica é simples
+    icon = <Folder size={48} className="text-yellow-500" fill="rgba(234, 179, 8, 0.2)" />;
+  }
+
+  return (
+    <div onClick={onClick} className="group relative flex flex-col items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer aspect-square">
+      <div className="mb-2">{icon}</div>
+      <p 
+        className={`text-center font-semibold text-slate-700 break-all w-full px-1 truncate ${isFolder ? 'text-sm' : 'text-xs'}`} 
+        title={item.name}
+      >
+        {item.name}
+      </p>
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenu onRename={() => onRename(type, item.id, item.name)} onDelete={() => onDelete(type, item.id, item.name)} onMove={() => onMove(type, item.id, item.name)} />
+      </div>
+    </div>
+  );
 };
 
 const ItemListRow = ({ item, type, onClick, onRename, onDelete, onMove }) => {
-    const isFolder = type === 'folder'; const icon = isFolder ? <Folder size={24} className="text-yellow-500" /> : <FileText size={24} className="text-sky-500" />; const modifiedDate = item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString() : 'N/A';
-    return (<tr onClick={onClick} className="group hover:bg-slate-50 cursor-pointer"><td className="p-4 whitespace-nowrap text-sm font-medium text-slate-900 flex items-center gap-3">{icon}{item.name}</td><td className="p-4 whitespace-nowrap text-sm text-slate-500">{modifiedDate}</td><td className="p-4 whitespace-nowrap text-sm text-slate-500 capitalize">{type === 'folder' ? 'Pasta' : 'Arquivo Gerado'}</td><td className="p-4 whitespace-nowrap text-right text-sm font-medium"><div onClick={(e) => e.stopPropagation()}><DropdownMenu onRename={() => onRename(type, item.id, item.name)} onDelete={() => onDelete(type, item.id, item.name)} onMove={() => onMove(type, item.id, item.name)} /></div></td></tr>);
+  const isFolder = type === 'folder';
+
+  // >>> A CORREÇÃO ESTÁ NESTA LINHA TAMBÉM <<<
+  const icon = isFolder 
+    ? <Folder size={24} className="text-yellow-500" /> 
+    : (toolIconMapSmall[item.type] || toolIconMapSmall.default);
+  
+  const modifiedDate = item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString() : 'N/A';
+
+  return (
+    <tr onClick={onClick} className="group hover:bg-slate-50 cursor-pointer">
+      <td className={`p-4 whitespace-nowrap font-medium text-slate-900 flex items-center gap-3 ${isFolder ? 'text-sm' : 'text-xs'}`}>
+        {icon}
+        {item.name}
+      </td>
+      <td className="p-4 whitespace-nowrap text-sm text-slate-500">{modifiedDate}</td>
+      <td className="p-4 whitespace-nowrap text-sm text-slate-500 capitalize">
+        {type === 'folder' ? 'Pasta' : 'Arquivo Gerado'}
+      </td>
+      <td className="p-4 whitespace-nowrap text-right text-sm font-medium">
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu onRename={() => onRename(type, item.id, item.name)} onDelete={() => onDelete(type, item.id, item.name)} onMove={() => onMove(type, item.id, item.name)} />
+        </div>
+      </td>
+    </tr>
+  );
 };
 
 const InfoBox = () => (<div className="bg-sky-50 border-l-4 border-sky-400 text-sky-800 p-4 rounded-r-lg mb-8 text-sm" role="alert"><div className="flex"><div className="py-1"><Lightbulb className="h-5 w-5 mr-3 flex-shrink-0" /></div><div><p className="font-bold mb-1">Bem-vindo(a) ao seu Drive!</p><p>Professor(a), aqui você pode criar pastas e subpastas para organizar os seus arquivos gerados.<br /><strong>Exemplo:</strong> Pasta (Escola 1) → Subpasta (1º ano A) → Subpasta (Biologia) → Arquivo (Atividade sobre Bactérias).</p><p className="mt-2"><i>Obs.: Isso é apenas um exemplo: você possui total autonomia para organizar as suas pastas e arquivos do jeito que desejar!</i></p></div></div></div>);
@@ -361,7 +443,33 @@ const ModernAuthBackground = () => (
 
 const HistoryScreen = ({ setView, loadGeneration }) => {
   const { currentUser } = useAuth(); const [folders, setFolders] = useState([]); const [generations, setGenerations] = useState([]); const [currentFolderId, setCurrentFolderId] = useState('root'); const [breadcrumbs, setBreadcrumbs] = useState([{ id: 'root', name: 'Meu Drive' }]); const [isLoading, setIsLoading] = useState(true); const [viewType, setViewType] = useState('grid'); const [itemToMove, setItemToMove] = useState(null);
-  useEffect(() => { if (!currentUser) return; setIsLoading(true); const unsubFolders = getFolders(currentUser.uid, currentFolderId, (data) => { setFolders(data); setIsLoading(false); }); const unsubGenerations = getGenerationsInFolder(currentUser.uid, currentFolderId, setGenerations); return () => { unsubFolders(); unsubGenerations(); }; }, [currentUser, currentFolderId]);
+  useEffect(() => {
+    if (!currentUser) return;
+    setIsLoading(true);
+
+    const unsubFolders = getFolders(
+      currentUser.uid,
+      currentFolderId,
+      (data) => {
+        setFolders(data);
+        setIsLoading(false);  
+      }
+    );
+
+    const unsubGenerations = getGenerationsInFolder(currentUser.uid, currentFolderId, (data) => {
+    console.log("PASSO 2: Dados recebidos do Firebase:", data);
+    const sortedData = data.sort((a, b) => (a.type || '').localeCompare(b.type || ''));
+    setGenerations(sortedData);
+    setIsLoading(false); // Desativa o loading aqui
+    });
+
+    return () => {
+      unsubFolders();
+      unsubGenerations();
+    };
+
+  }, [currentUser, currentFolderId]);
+
   const handleCreateFolder = async () => { const folderName = prompt("Digite o nome da nova pasta:"); if (folderName && folderName.trim()) { try { await createFolder(currentUser.uid, currentFolderId, folderName.trim()); toast.success(`Pasta "${folderName}" criada.`); } catch (error) { toast.error("Não foi possível criar a pasta."); console.error(error); } } };
   const handleNavigateToFolder = (folder) => { setBreadcrumbs(prev => [...prev, { id: folder.id, name: folder.name }]); setCurrentFolderId(folder.id); };
   const handleBreadcrumbClick = (index) => { setCurrentFolderId(breadcrumbs[index].id); setBreadcrumbs(breadcrumbs.slice(0, index + 1)); };
@@ -479,7 +587,7 @@ const HistoryScreen = ({ setView, loadGeneration }) => {
   );
 }
 
-const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade, onClose, isModal }) => {
+const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade, onClose, isModal,goBack }) => {
   const [topic, setTopic] = useState(initialTopic || '');
   const [pages, setPages] = useState(1);
   const [grade, setGrade] = useState(initialGrade || '6º ano - Ensino Fundamental II');
@@ -687,9 +795,13 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
           {onClose ? <X size={18} className="mr-1"/> : <ChevronLeft size={18} className="mr-1"/>}
           {onClose ? 'Cancelar' : 'Voltar ao Início'}
         </button>
-      </div>
-    </div>
-  );
+            <button onClick={goBack ? goBack : () => setView('history')} className="form-button-secondary mt-3">
+            <ChevronLeft size={18} className="mr-1"/>
+            Voltar
+            </button>
+          </div>
+        </div>
+      );
 };
 
 const WhiteboardHomeScreen = ({ setView }) => {
@@ -828,6 +940,7 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
       return;
     }
     try {
+      console.log("PASSO 1: Objeto sendo enviado para o Firebase:", JSON.stringify(editableResult, null, 2)); // linha para diagnóstico
       await saveGeneration(currentUser.uid, folderId, fileName, editableResult);
       toast.success("Salvo no seu histórico com sucesso!");
       setShowSaveModal(false);
@@ -1466,6 +1579,13 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
                   <button onClick={() => setShowSaveModal(true)} className="form-button-primary w-full">
                     <Save size={18} className="mr-2" /> Salvar no Histórico
                   </button>
+                {/* >>> MUDANÇA: Adiciona o botão de Voltar <<< */} 
+                {goBack && ( 
+                  <button onClick={goBack} className="form-button-secondary w-full">
+                    <ChevronLeft size={18} className="mr-1" /> Voltar
+                  </button>
+                )}
+
                   {previousResult && (
                     <button onClick={goBack} className="form-button-secondary w-full">
                       <ChevronLeft size={18} className="mr-1" /> Voltar ao Planejamento
@@ -1502,8 +1622,8 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
                       <button onClick={() => setView(homeView)} className="form-button-secondary w-full">
                         <FilePlus className="mr-2" size={20} /> Criar Novo
                       </button>
-                      <button onClick={() => setView('home')} className="form-button-tertiary w-full">
-                        <ChevronLeft size={18} className="mr-1" /> Início
+                      <button onClick={() => setView('history')} className="form-button-tertiary w-full">
+                        <ChevronLeft size={18} className="mr-1" /> Voltar ao Meu Drive
                       </button>
                     </>
                   )}
@@ -1539,13 +1659,16 @@ const VerifyEmailScreen = () => {
   const [sendSuccess, setSendSuccess] = useState(false);
 
   const handleResend = async () => {
-    if (!currentUser) return;
+    if (!currentUser || isSending) return;
     setIsSending(true);
     setSendSuccess(false);
+    
     try {
       await resendVerificationEmail(currentUser);
       toast.success("Novo e-mail de verificação enviado!");
       setSendSuccess(true);
+      // Desabilita o botão por um tempo para evitar spam
+      setTimeout(() => setSendSuccess(false), 30000); 
     } catch (error) {
       toast.error("Falha ao reenviar. Tente novamente em alguns minutos.");
       console.error(error);
@@ -1554,17 +1677,18 @@ const VerifyEmailScreen = () => {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogoutAndGoBack = async () => {
     try {
       await logout();
       toast.success("Você saiu da conta.");
+      // A própria estrutura do AppGatekeeper vai redirecionar para a tela de login
     } catch (error) {
       toast.error("Erro ao sair.");
     }
   };
 
   return (
-    <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8 text-center animate-fade-in-up">
+    <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center animate-fade-in-up border border-slate-200">
       <Mail className="mx-auto text-sky-500 mb-4" size={48} />
       <h1 className="text-2xl font-bold text-slate-800">Verifique seu E-mail</h1>
       <p className="text-slate-600 mt-2 mb-6">
@@ -1574,12 +1698,16 @@ const VerifyEmailScreen = () => {
         Após verificar, <strong>atualize esta página</strong> para acessar a plataforma. Não se esqueça de checar sua caixa de spam.
       </p>
       
-      <button onClick={handleResend} disabled={isSending} className="form-button-primary w-full">
-        {isSending ? <Loader className="animate-spin mr-2" /> : null}
-        {sendSuccess ? 'E-mail Reenviado!' : 'Reenviar E-mail de Confirmação'}
+      <button 
+        onClick={handleResend} 
+        disabled={isSending || sendSuccess} 
+        className="form-button-primary w-full"
+      >
+        {isSending && <Loader className="animate-spin mr-2" size={20} />}
+        {sendSuccess ? 'Reenviado! Tente em 30s' : 'Reenviar E-mail de Confirmação'}
       </button>
 
-      <button onClick={handleLogout} className="toggle-auth-view mt-4">
+      <button onClick={handleLogoutAndGoBack} className="w-full text-center text-sm font-semibold text-slate-600 hover:text-slate-800 mt-4 py-2">
         Usar outra conta
       </button>
     </div>
@@ -1593,18 +1721,61 @@ const VerifyEmailScreen = () => {
 // =================================================================================
 
 function AppContent() {
-  const { currentUser } = useAuth(); const [view, setView] = useState('home'); const [result, setResult] = useState(null); const [previousResult, setPreviousResult] = useState(null);
-  useEffect(() => { if (!currentUser) { setView('home'); setResult(null); setPreviousResult(null); } }, [currentUser]);
-  const handleSetResult = (newResult, keepHistory = false) => { if (keepHistory && result) { setPreviousResult(result); } else { setPreviousResult(null); } setResult(newResult); setView('result'); };
-  const handleGoBackResult = () => { if (previousResult) { setResult(previousResult); setPreviousResult(null); } };
-  const loadGenerationFromHistory = (content) => { setResult(content); setView('result'); };
+  const { currentUser } = useAuth();
   
-  switch (view) {
-    case 'dashboard': return <WhiteboardHomeScreen setView={setView} />;
-    case 'history': return <HistoryScreen setView={setView} loadGeneration={loadGenerationFromHistory} />;
-    case 'result': if (!result) return <HistoryScreen setView={setView} loadGeneration={loadGenerationFromHistory} />; return <ResultScreen setView={setView} setResult={handleSetResult} result={result} previousResult={previousResult} goBack={handleGoBackResult}/>;
-    case 'home': return <WhiteboardHomeScreen setView={setView} loadGeneration={loadGenerationFromHistory} />;
-    default: return <GeneratorScreen setView={setView} setResult={handleSetResult} type={view} />;
+  // >>> MUDANÇA: 'view' agora é um histórico <<<
+  const [history, setHistory] = useState(['home']);
+  const [result, setResult] = useState(null);
+  
+  // A view atual é sempre o último item do histórico
+  const currentView = history[history.length - 1];
+
+  useEffect(() => {
+    // Se o usuário deslogar, reseta o histórico para a home
+    if (!currentUser) {
+      setHistory(['home']);
+      setResult(null);
+    }
+  }, [currentUser]);
+
+  // Função para navegar para uma nova tela
+  const navigateTo = (view) => {
+    setHistory(prev => [...prev, view]);
+  };
+  
+  // Função para voltar para a tela anterior
+  const navigateBack = () => {
+    // Não permite voltar além da tela inicial
+    if (history.length > 1) {
+      setHistory(prev => prev.slice(0, -1));
+    }
+  };
+  
+  // Função para definir o resultado e ir para a tela de resultado
+  const handleSetResult = (newResult) => {
+    setResult(newResult);
+    navigateTo('result');
+  };
+  
+  // Função para carregar um arquivo do histórico
+  const loadGenerationFromHistory = (content) => {
+    setResult(content);
+    navigateTo('result');
+  };
+  
+  // A lógica de roteamento agora usa 'currentView'
+  switch (currentView) {
+    case 'history': 
+      return <HistoryScreen setView={navigateTo} loadGeneration={loadGenerationFromHistory} />;
+    case 'result': 
+      if (!result) return <HistoryScreen setView={navigateTo} loadGeneration={loadGenerationFromHistory} />;
+      // Passamos a função de voltar para o ResultScreen
+      return <ResultScreen setView={navigateTo} setResult={handleSetResult} result={result} goBack={navigateBack} />;
+    case 'home': 
+      return <WhiteboardHomeScreen setView={navigateTo} />;
+    default: 
+      // Passamos a função de voltar para o GeneratorScreen
+      return <GeneratorScreen setView={navigateTo} setResult={handleSetResult} type={currentView} goBack={navigateBack} />;
   }
 }
 
@@ -1620,12 +1791,23 @@ function AppGatekeeper() {
   }
   
   if (currentUser) {
-    // ... (Lógica de verificação de e-mail pode ir aqui, se desejar) ...
+    // >>> AQUI ESTÁ A NOVA LÓGICA <<<
+    // Se o usuário está logado, mas o e-mail não foi verificado
+    // E a conta não é anônima (convidados não precisam verificar e-mail)
+    if (!currentUser.emailVerified && !currentUser.isAnonymous) {
+      // Mostra a tela de verificação de e-mail.
+      return (
+        <div className="w-full min-h-screen flex items-center justify-center bg-slate-100">
+          <VerifyEmailScreen />
+        </div>
+      );
+    }
+    
+    // Se o e-mail foi verificado (ou é um convidado), libera o acesso ao app.
     return <AppContent />;
   }
 
-  // Se o usuário não está logado, simplesmente renderize o AuthScreen.
-  // Ele agora gerencia toda a experiência de autenticação e funcionalidades.
+  // Se o usuário não está logado, mostra a tela de autenticação.
   return (
     <div className="auth-modern-bg">
       <AuthScreen />

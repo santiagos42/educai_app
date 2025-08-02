@@ -88,7 +88,16 @@ export const getAllUserFolders = async (ownerId) => {
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
-export const saveGeneration = (ownerId, folderId, name, data) => addDoc(collection(db, "generations"), { ownerId, folderId, name, content: data, createdAt: serverTimestamp() });
+export const saveGeneration = (ownerId, folderId, name, data) => {
+  return addDoc(collection(db, "generations"), {
+    ownerId,
+    folderId,
+    name,
+    content: data,
+    type: data.type, // <-- A LINHA ESSENCIAL ADICIONADA
+    createdAt: serverTimestamp()
+  });
+};
 
 // VERSÃO ATUALIZADA: com ordenação e tratamento de erros
 export const getGenerationsInFolder = (ownerId, folderId, callback) => {

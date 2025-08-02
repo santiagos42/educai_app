@@ -75,7 +75,7 @@ module.exports = async (req, res) => {
         break;
 
       case 'caseStudy':
-        prompt = `Você é um professor especialista em criar estudos de casos otimizados para o ensino de estudantes. Crie um estudo de caso sobre "${topic}" para a disciplina de "${discipline}" (${grade}). A resposta DEVE ser um único objeto JSON com chaves: "title", "context", "problem", e "discussion_points". A chave "discussion_points" deve ser um array de objetos, onde cada objeto tem as chaves "question" (string) e "answer" (string com a resposta ou pontos esperados para discussão).`;
+        prompt = `Você é um professor especialista em criar estudos de casos otimizados para o ensino de estudantes. Crie um estudo de caso criativo e completo sobre "${topic}" para a disciplina de "${discipline}" (${grade}). A resposta DEVE ser um único objeto JSON com chaves: "title", "context", "problem", e "discussion_points". A chave "discussion_points" deve ser um array de objetos, onde cada objeto tem as chaves "question" (string) e "answer" (string com a resposta ou pontos esperados para discussão).`;
         break;
 
       case 'presentation':
