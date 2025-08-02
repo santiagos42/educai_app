@@ -360,19 +360,13 @@ const InspirationalQuote = () => {
 export function AuthScreen() {
   const [authView, setAuthView] = useState('login');
   const featuresRef = useRef(null);
-  const topRef = useRef(null); // Referência para a seção do topo
+  const topRef = useRef(null);
 
-  // NOVA FUNÇÃO DE NAVEGAÇÃO CENTRALIZADA
-  // Esta função lida com a rolagem e a mudança de estado de forma coordenada.
   const handleNavigation = (targetView) => {
-    // Se o alvo for 'login' ou 'signup', primeiro role para o topo.
     if (targetView === 'login' || targetView === 'signup') {
       topRef.current?.scrollIntoView({ behavior: 'smooth' });
-      // A mudança de estado acontece aqui, garantindo que a tela correta seja mostrada.
       setAuthView(targetView);
-    }
-    // Se for para as funcionalidades, apenas role para baixo.
-    else if (targetView === 'features') {
+    } else if (targetView === 'features') {
       featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   };
@@ -382,57 +376,68 @@ export function AuthScreen() {
   const titles = { login: "Bem-vindo(a)!", signup: "Crie sua Conta", forgotPassword: "Recuperar Senha" };
 
   return (
-    // O contêiner principal para a rolagem
     <div>
-      {/* SEÇÃO 1: "ACIMA DA DOBRA" - O que o usuário vê primeiro */}
-      {/* Adicionamos a ref do topo a esta seção */}
-      <section ref={topRef} className="h-screen w-full flex items-center justify-center p-4">
-        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-24 items-center">
+      {/* SEÇÃO 1: ACIMA DA DOBRA */}
+      <section ref={topRef} className="w-full flex items-center justify-center p-4 lg:min-h-screen">
+        
+        {/* >>> MUDANÇA PRINCIPAL AQUI <<< */}
+        {/*
+          - Por padrão (mobile), é um flex-col com gap grande.
+          - A partir do breakpoint 'lg', vira um flex-row com gap menor.
+        */}
+        <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-8">
           
-          {/* --- ORDEM DAS COLUNAS --- */}
-          
-          {/* COLUNA 1 (ESQUERDA): AUTENTICAÇÃO */}
-          <div className="auth-card lg:order-1 order-2">
-            <div className="w-full max-w-md mx-auto flex flex-col justify-between h-full">
-              <div>
-                <h2 className="text-3xl font-bold text-slate-100 mb-6 text-center">{titles[authView]}</h2>
-                {authView === 'login' && <LoginForm setView={setAuthView} />}
-                {authView === 'signup' && <SignUpForm setView={setAuthView} />}
-                {authView === 'forgotPassword' && <ForgotPasswordForm setView={setAuthView} />}
-                <div className="text-center mt-4">
-                  {authView === 'login' && <button onClick={() => setAuthView('signup')} className="toggle-auth-view">Não tem uma conta? <strong>Crie uma agora</strong></button>}
-                  {(authView === 'signup' || authView === 'forgotPassword') && <button onClick={() => setAuthView('login')} className="toggle-auth-view">Já tem uma conta? <strong>Faça o login</strong></button>}
+          {/* COLUNA 1 (ESQUERDA NO DESKTOP): AUTENTICAÇÃO */}
+          {/*
+            - order-2: Em mobile, aparece em segundo lugar.
+            - lg:order-1: Em desktop, volta para a primeira posição.
+            - w-full lg:w-1/3: Ocupa toda a largura no mobile, e 1/3 no desktop.
+          */}
+          <div className="w-full lg:w-1/3 order-2 lg:order-1">
+            <div className="auth-card"> {/* A classe auth-card já define max-width e etc. */}
+              <div className="w-full flex flex-col justify-between h-full">
+                <div>
+                  <h2 className="text-3xl font-bold text-slate-100 mb-6 text-center">{titles[authView]}</h2>
+                  {authView === 'login' && <LoginForm setView={setAuthView} />}
+                  {authView === 'signup' && <SignUpForm setView={setAuthView} />}
+                  {authView === 'forgotPassword' && <ForgotPasswordForm setView={setAuthView} />}
+                  <div className="text-center mt-4">
+                    {authView === 'login' && <button onClick={() => setAuthView('signup')} className="toggle-auth-view">Não tem uma conta? <strong>Crie uma agora</strong></button>}
+                    {(authView === 'signup' || authView === 'forgotPassword') && <button onClick={() => setAuthView('login')} className="toggle-auth-view">Já tem uma conta? <strong>Faça o login</strong></button>}
+                  </div>
+                  <div className="separator">ou continue com</div>
+                  <div className="flex flex-col sm:flex-row gap-4 mt-2">
+                    <button onClick={handleGoogleLogin} className="social-button"><img src={googleIconUrl} alt="Google" className="w-5 h-5" /> Google</button>
+                    <button onClick={handleGuestLogin} className="social-button"><User size={18}/> Convidado</button>
+                  </div>
                 </div>
-                <div className="separator">ou continue com</div>
-                <div className="flex flex-col sm:flex-row gap-4 mt-2">
-                  <button onClick={handleGoogleLogin} className="social-button"><img src={googleIconUrl} alt="Google" className="w-5 h-5" /> Google</button>
-                  <button onClick={handleGuestLogin} className="social-button"><User size={18}/> Convidado</button>
-                </div>
+                <div className="mt-8 pt-6 border-t border-slate-100"><InspirationalQuote /></div>
               </div>
-              <div className="mt-8 pt-6 border-t border-slate-100"><InspirationalQuote /></div>
             </div>
           </div>
 
-          {/* COLUNA 2 (CENTRAL): MARKETING */}
-          <div className="lg:order-2 order-1 auth-marketing-container-center">
-            {/* >>> MUDANÇA 1 <<<
-                Passamos a função handleNavigation com o alvo 'features' */}
+          {/* COLUNA 2 (CENTRAL NO DESKTOP): MARKETING */}
+          {/*
+            - order-1: Em mobile, aparece primeiro, no topo.
+            - lg:order-2: Em desktop, vai para o centro.
+          */}
+          <div className="w-full lg:w-1/3 order-1 lg:order-2">
             <AuthMarketing onScrollClick={() => handleNavigation('features')} />
           </div>
 
-          {/* COLUNA 3 (DIREITA): PLANOS */}
-          <div className="lg:order-3 order-3">
-            {/* >>> MUDANÇA 2 <<<
-                Passamos a prop onNavigate em vez de setAuthView */}
+          {/* COLUNA 3 (DIREITA NO DESKTOP): PLANOS */}
+          {/*
+            - order-3: Em mobile e desktop, é sempre o último.
+          */}
+          <div className="w-full lg:w-1/3 order-3">
             <PricingTiers onNavigate={handleNavigation} />
           </div>
+          
         </div>
       </section>
 
-      {/* SEÇÃO 2: "ABAIXO DA DOBRA" - A página de funcionalidades */}
-      <section ref={featuresRef}>
-        {/* >>> MUDANÇA 3 <<<
-            Passamos a prop onNavigate em vez de setAuthView */}
+      {/* SEÇÃO 2: "ABAIXO DA DOBRA" */}
+      <section ref={featuresRef} className="mt-20 lg:mt-0">
         <FeaturesScreen onNavigate={handleNavigation} />
       </section>
     </div>
