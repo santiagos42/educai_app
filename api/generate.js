@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
           .map(qType => allInstructions[qType])
           .filter(Boolean)
           .join(' \n\n');
-        const questionCount = (pages || 1) * 8;
+        const questionCount = (pages || 1) * 10;
         prompt = `Como um especialista em elaboração de material didático, crie uma atividade avaliativa sobre "${topic}" para a série "${grade}", contendo exatamente ${questionCount} questões no total. As questões devem ser distribuídas **apenas** entre os seguintes tipos: ${questionTypes.join(', ')}. Siga RIGOROSAMENTE estas instruções detalhadas para cada tipo de questão solicitado: ${selectedInstructions} A resposta DEVE ser um único objeto JSON, contendo apenas uma chave principal "questions". O valor dessa chave deve ser um array de objetos, onde cada objeto representa uma questão e possui as seguintes chaves: "type" (o tipo da questão, ex: 'enem'), "statement", "options" (um array de strings, se aplicável), "answer" (o índice da resposta ou um booleano, se aplicável), e "justification".`;
         break;
 
@@ -100,7 +100,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Chave de API não configurada no ambiente do servidor.' });
     }
 
-    const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
     
     const fetchOptions = {
       method: 'POST',

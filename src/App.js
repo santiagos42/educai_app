@@ -5,7 +5,7 @@ import {
     BookOpen, FileText, Search, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, 
     ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette,
     Copy, Folder, FolderPlus, MoreVertical, Edit, Trash2 as TrashIcon, Save, FolderClock, FolderOpen,
-    LayoutGrid, List, Home, Move, ArrowRight, Mail,
+    LayoutGrid, CopyPlus, List, Home, Move, ArrowRight, Mail,
 
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -241,10 +241,47 @@ const CaseStudyContent = ({ result, onContentChange }) => {
 // COMPONENTES DO DASHBOARD E TELAS
 // =================================================================================
 
-const DropdownMenu = ({ onRename, onDelete, onMove }) => {
-  const [isOpen, setIsOpen] = useState(false); const menuRef = useRef(null);
-  useEffect(() => { const handleClickOutside = (event) => { if (menuRef.current && !menuRef.current.contains(event.target)) setIsOpen(false); }; document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside); }, []);
-  return (<div className="relative" ref={menuRef}><button onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }} className="p-1 rounded-full hover:bg-slate-200"><MoreVertical size={16} /></button>{isOpen && (<div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-20 py-1"><button onClick={() => { onRename(); setIsOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"><Edit size={14} className="mr-2"/> Renomear</button><button onClick={() => { onMove(); setIsOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"><Move size={14} className="mr-2"/> Mover</button><button onClick={() => { onDelete(); setIsOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><TrashIcon size={14} className="mr-2"/> Excluir</button></div>)}</div>);
+const DropdownMenu = ({ itemType, onRename, onDelete, onMove, onDuplicate }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  
+  return (
+    <div className="relative" ref={menuRef}>
+      <button onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }} className="p-1 rounded-full hover:bg-slate-200">
+        <MoreVertical size={16} />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 py-1">
+          {/* >>> NOVA OPÇÃO DE DUPLICAR (só aparece para arquivos) <<< */}
+          {itemType === 'file' && (
+            <button onClick={() => { onDuplicate(); setIsOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">
+              <CopyPlus size={14} className="mr-2"/> Fazer uma cópia
+            </button>
+          )}
+
+          <button onClick={() => { onRename(); setIsOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">
+            <Edit size={14} className="mr-2"/> Renomear
+          </button>
+          <button onClick={() => { onMove(); setIsOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">
+            <Move size={14} className="mr-2"/> Mover
+          </button>
+          <button onClick={() => { onDelete(); setIsOpen(false); }} className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+            <TrashIcon size={14} className="mr-2"/> Excluir
+          </button>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const HistorySidebar = ({ setView }) => {
@@ -326,32 +363,11 @@ const InspirationalQuoteDashboard = () => {
 };
 
 
-const ItemCard = ({ item, type, onClick, onRename, onDelete, onMove }) => {
+const ItemCard = ({ item, type, onClick, onRename, onDelete, onMove, onDuplicate }) => {
   const isFolder = type === 'folder';
-  let icon; // Vamos declarar o ícone aqui
-
-  // Apenas para arquivos, vamos fazer nosso diagnóstico detalhado
-  if (type === 'file') {
-    const keyToFind = item.type;
-    const foundIcon = toolIconMap[keyToFind];
-
-    // ESTE É O CONSOLE.LOG MAIS IMPORTANTE
-    console.group(`DIAGNÓSTICO PARA O ARQUIVO: ${item.name}`);
-    console.log("1. A chave que estou usando é:", `'${keyToFind}'`);
-    console.log("2. O dicionário (toolIconMap) em que estou procurando é:", toolIconMap);
-    console.log("3. O resultado da busca (toolIconMap[chave]) foi:", foundIcon);
-    console.groupEnd();
-
-    // Lógica final para definir o ícone
-    if (foundIcon) {
-      icon = foundIcon; // Se encontrou, usa o ícone
-    } else {
-      icon = toolIconMap.default; // Senão, usa o padrão
-    }
-  } else {
-    // Se for uma pasta, a lógica é simples
-    icon = <Folder size={48} className="text-yellow-500" fill="rgba(234, 179, 8, 0.2)" />;
-  }
+  const icon = isFolder 
+    ? <Folder size={48} className="text-yellow-500" fill="rgba(234, 179, 8, 0.2)" /> 
+    : (toolIconMap[item.type] || toolIconMap.default);
 
   return (
     <div onClick={onClick} className="group relative flex flex-col items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer aspect-square">
@@ -363,16 +379,21 @@ const ItemCard = ({ item, type, onClick, onRename, onDelete, onMove }) => {
         {item.name}
       </p>
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenu onRename={() => onRename(type, item.id, item.name)} onDelete={() => onDelete(type, item.id, item.name)} onMove={() => onMove(type, item.id, item.name)} />
+        {/* >>> MUDANÇAS AQUI <<< */}
+        <DropdownMenu 
+          itemType={type} 
+          onRename={onRename} 
+          onDelete={onDelete} 
+          onMove={onMove}
+          onDuplicate={onDuplicate}
+        />
       </div>
     </div>
   );
 };
 
-const ItemListRow = ({ item, type, onClick, onRename, onDelete, onMove }) => {
+const ItemListRow = ({ item, type, onClick, onRename, onDelete, onMove, onDuplicate }) => {
   const isFolder = type === 'folder';
-
-  // >>> A CORREÇÃO ESTÁ NESTA LINHA TAMBÉM <<<
   const icon = isFolder 
     ? <Folder size={24} className="text-yellow-500" /> 
     : (toolIconMapSmall[item.type] || toolIconMapSmall.default);
@@ -391,7 +412,14 @@ const ItemListRow = ({ item, type, onClick, onRename, onDelete, onMove }) => {
       </td>
       <td className="p-4 whitespace-nowrap text-right text-sm font-medium">
         <div onClick={(e) => e.stopPropagation()}>
-          <DropdownMenu onRename={() => onRename(type, item.id, item.name)} onDelete={() => onDelete(type, item.id, item.name)} onMove={() => onMove(type, item.id, item.name)} />
+          {/* >>> MUDANÇAS AQUI <<< */}
+          <DropdownMenu 
+            itemType={type}
+            onRename={onRename} 
+            onDelete={onDelete} 
+            onMove={onMove}
+            onDuplicate={onDuplicate}
+          />
         </div>
       </td>
     </tr>
@@ -485,6 +513,40 @@ const HistoryScreen = ({ setView, loadGeneration }) => {
   };
   const currentFolder = breadcrumbs[breadcrumbs.length - 1];
 
+    const handleDuplicate = async (itemId) => {
+    const loadingToast = toast.loading('Criando cópia...');
+    
+    // 1. Encontrar o documento original no estado atual
+    const originalDoc = generations.find(g => g.id === itemId);
+    
+    if (!originalDoc) {
+      toast.error('Arquivo original não encontrado.', { id: loadingToast });
+      return;
+    }
+    
+    // 2. Preparar os dados para o novo documento
+    const newName = `Cópia de ${originalDoc.name}`;
+    // O conteúdo e o tipo são os mesmos do original
+    const dataToSave = {
+      ...originalDoc.content, // Espalha todo o conteúdo (topic, questions, etc.)
+      type: originalDoc.type // Garante que o tipo seja copiado
+    };
+
+    try {
+      // 3. Chamar a função 'saveGeneration' que já existe!
+      await saveGeneration(
+        currentUser.uid,
+        currentFolderId, // Salva a cópia na mesma pasta atual
+        newName,
+        dataToSave 
+      );
+      toast.success('Cópia criada com sucesso!', { id: loadingToast });
+    } catch (error) {
+      toast.error('Não foi possível criar a cópia.', { id: loadingToast });
+      console.error("Erro ao duplicar arquivo:", error);
+    }
+  };
+
   return (
     <div className="w-full min-h-screen bg-white flex">
       {itemToMove && <MoveItemModal item={itemToMove} onClose={() => setItemToMove(null)} onConfirmMove={handleConfirmMove} />}
@@ -556,7 +618,18 @@ const HistoryScreen = ({ setView, loadGeneration }) => {
               {viewType === 'grid' ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {folders.map(folder => (<ItemCard key={folder.id} item={folder} type="folder" onClick={() => handleNavigateToFolder(folder)} onRename={handleRename} onDelete={handleDelete} onMove={handleOpenMoveModal}/>))}
-                  {generations.map(gen => (<ItemCard key={gen.id} item={gen} type="file" onClick={() => loadGeneration(gen.content)} onRename={handleRename} onDelete={handleDelete} onMove={handleOpenMoveModal}/>))}
+                  {generations.map(gen => (
+                    <ItemCard 
+                      key={gen.id} 
+                      item={gen} 
+                      type="file" 
+                      onClick={() => loadGeneration(gen.content)} 
+                      onRename={() => handleRename('file', gen.id, gen.name)} 
+                      onDelete={() => handleDelete('file', gen.id, gen.name)} 
+                      onMove={() => handleOpenMoveModal('file', gen.id, gen.name)}
+                      onDuplicate={() => handleDuplicate(gen.id)} // <<< LINHA ADICIONADA
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
@@ -793,7 +866,7 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
         </button>
         <button onClick={onClose ? onClose : () => setView('home')} className="form-button-secondary mt-3">
           {onClose ? <X size={18} className="mr-1"/> : <ChevronLeft size={18} className="mr-1"/>}
-          {onClose ? 'Cancelar' : 'Voltar ao Início'}
+          {onClose ? 'Ver Meu Arquivo' : 'Voltar ao Início'}
         </button>
             <button onClick={goBack ? goBack : () => setView('history')} className="form-button-secondary mt-3">
             <ChevronLeft size={18} className="mr-1"/>
@@ -893,7 +966,7 @@ const SaveToHistoryModal = ({ result, onClose, onSave }) => {
           </div>
         </div>
         <div className="flex gap-4 mt-8">
-          <button onClick={onClose} className="form-button-secondary w-full">Cancelar</button>
+          <button onClick={onClose} className="form-button-secondary w-full">Ver Meu Arquivo</button>
           <button onClick={handleSave} className="form-button-primary w-full"><Save size={18} className="mr-2" />Salvar</button>
         </div>
       </div>
