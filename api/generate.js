@@ -62,7 +62,7 @@ module.exports = async (req, res) => {
           .filter(Boolean)
           .join(' \n\n');
         const questionCount = (pages || 1) * 10;
-        prompt = `Como um especialista em elaboração de material didático, crie uma atividade avaliativa sobre "${topic}" para a série "${grade}", contendo exatamente ${questionCount} questões no total. As questões devem ser distribuídas **apenas** entre os seguintes tipos: ${questionTypes.join(', ')}. Siga RIGOROSAMENTE estas instruções detalhadas para cada tipo de questão solicitado: ${selectedInstructions} A resposta DEVE ser um único objeto JSON, contendo apenas uma chave principal "questions". O valor dessa chave deve ser um array de objetos, onde cada objeto representa uma questão e possui as seguintes chaves: "type" (o tipo da questão, ex: 'enem'), "statement", "options" (um array de strings, se aplicável), "answer" (o índice da resposta ou um booleano, se aplicável), e "justification".`;
+        prompt = `Como um especialista em elaboração de material didático, crie uma atividade avaliativa sobre "${topic}" para a série "${grade}", contendo exatamente ${questionCount} questões no total. As questões devem ser distribuídas **apenas** entre os seguintes tipos: ${questionTypes.join(', ')}. Siga RIGOROSAMENTE estas instruções detalhadas para cada tipo de questão solicitado: ${selectedInstructions} A resposta DEVE ser um único objeto JSON, contendo apenas uma chave principal "questions". O valor dessa chave deve ser um array de objetos, onde cada objeto representa uma questão e possui as seguintes chaves: "type" (o tipo da questão, ex: 'enem'), "statement", "options" (um array de strings, se aplicável), "answer" (o índice da resposta ou um booleano, se aplicável), e "justification". Não utilize símbolos que possam causar problemas de formatação em HTML.`;
         break;
 
       case 'lessonPlan':
@@ -79,7 +79,7 @@ module.exports = async (req, res) => {
         break;
 
       case 'presentation':
-        prompt = `Você é um professor especialista em criar apresentações de slides para alunos. Crie o conteúdo para uma apresentação de slides sobre "${topic}" para "${grade}", com um tom ${presentationStyle}. Certifique-se de que exista uma estética chamativa, rica em cores e em destaques. A resposta DEVE ser um único objeto JSON com a chave "slides", um array de objetos. Cada objeto deve ter chaves "title" (string) e "content" (array de strings para os bullet points). Gere de 5 a 7 slides.`;
+        prompt = `Você é um professor especialista em criar apresentações de slides para alunos. Crie o conteúdo para uma apresentação de slides sobre "${topic}" para "${grade}", com um tom ${presentationStyle}. Certifique-se de que exista uma estética chamativa, rica em cores e em destaques. A resposta DEVE ser um único objeto JSON com a chave "slides", um array de objetos. Cada objeto deve ter chaves "title" (string) e "content" (array de strings para os bullet points). Gere de 5 a 10 slides.`;
         break;
 
       case 'summary':

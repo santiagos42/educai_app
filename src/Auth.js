@@ -6,6 +6,7 @@ import {
 } from './firebase';
 import toast from 'react-hot-toast';
 import { LogOut, User, Mail, Key, Loader, Star, Check, Zap, ShieldCheck, MessageSquare, Sparkles, Rocket, Clock, Cpu, FolderClock, GraduationCap, Palette} from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
 
 // --- Assets ---
 const googleIconUrl = process.env.PUBLIC_URL + '/google.svg';
@@ -15,64 +16,99 @@ const logoUrl = process.env.PUBLIC_URL + '/logo900.png';
 // =================================================================================
 // NOVO COMPONENTE 1: PAINEL DE PLANOS (PRICING)
 // =================================================================================
+
+
+// Coloque sua chave PUBLICÁVEL aqui
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+
 const PricingTiers = ({ onNavigate }) => {
-  const plans = [
-    {
-      name: "Plano Freemium",
-      price: "R$0",
-      period: "/para sempre",
-      description: "Ideal para explorar as funcionalidades essenciais.",
-      features: [
-        "Acesso limitado",
-        "10 gerações de conteúdo por mês",
-        "Salvar até 15 arquivos no Drive",
-      ],
-      buttonText: "Criar Conta Gratuita",
-      isPrimary: false,
-      action: () => onNavigate('signup'),
-    },
-    {
-      name: "Plano Premium",
-      price: "R$39,90",
-      period: "/mês",
-      description: "Desbloqueie todo o potencial da plataforma.",
-      features: [
-        "Gerações de conteúdo ilimitadas",
-        "Drive com armazenamento ilimitado",
-        "Acesso a todas as funcionalidades",
-      ],
-      buttonText: "Seja Premium",
-      isPrimary: true,
-      action: () => onNavigate('signup'),
+  const { currentUser } = useAuth(); // Pegamos o usuário para enviar o UID
+
+  // Função específica para o clique no botão Premium
+  const handlePremiumClick = async () => {
+    const toastId = toast.loading("Redirecionando para o pagamento...");
+
+    if (!currentUser || currentUser.isAnonymous) {
+      toast.error("Você precisa criar uma conta para se tornar Premium.", { id: toastId });
+      // Leva o usuário para a tela de cadastro se ele for convidado ou não estiver logado
+      onNavigate('signup');
+      return;
     }
-  ];
+    
+    try {
+      // Substitua pela URL real da sua Cloud Function
+      const functionUrl = "https://us-central1-appeducai.cloudfunctions.net/createCheckoutSession";
+
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.uid }),
+      });
+
+      const session = await response.json();
+
+      if (!response.ok) {
+        throw new Error(session.error || "Ocorreu um erro no servidor.");
+      }
+      
+      const stripe = await stripePromise;
+      await stripe.redirectToCheckout({ sessionId: session.id });
+      toast.dismiss(toastId);
+
+    } catch (error) {
+      toast.error(`Falha ao iniciar o pagamento: ${error.message}`, { id: toastId });
+    }
+  };
 
   return (
     <div className="pricing-card">
-      {plans.map((plan) => (
-        <div key={plan.name} className={`plan-item ${plan.isPrimary ? 'primary' : ''}`}>
-          {plan.isPrimary && <div className="recommend-badge"><Star size={12} className="mr-1.5"/> Mais Popular</div>}
-          <div className="plan-header">
-            <h3 className="plan-name">{plan.name}</h3>
-            <p className="plan-description">{plan.description}</p>
-          </div>
-          <div className="plan-price">
-            {plan.price}
-            <span className="plan-period">{plan.period}</span>
-          </div>
-          <ul className="plan-features">
-            {plan.features.map(feature => (
-              <li key={feature}><Check size={16} className="feature-check-icon"/><span>{feature}</span></li>
-            ))}
-          </ul>
-          <button 
-          onClick={() => onNavigate('signup')}
-          className={`plan-button ${plan.isPrimary ? 'primary-button' : 'secondary-button'}`}>
-            <Zap size={16} className="mr-2"/>{plan.buttonText}
-          </button>
-          
+      {/* Card do Plano Freemium */}
+      <div className="plan-item">
+        <div className="plan-header">
+          <h3 className="plan-name">Plano Freemium</h3>
+          <p className="plan-description">Ideal para explorar as funcionalidades essenciais.</p>
         </div>
-      ))}
+        <div className="plan-price">
+          R$0<span className="plan-period">/para sempre</span>
+        </div>
+        <ul className="plan-features">
+          <li><Check size={16} className="feature-check-icon"/><span>Acesso limitado</span></li>
+          <li><Check size={16} className="feature-check-icon"/><span>10 gerações de conteúdo por mês</span></li>
+          <li><Check size={16} className="feature-check-icon"/><span>Salvar até 15 arquivos no Drive</span></li>
+        </ul>
+        {/* O botão Freemium leva para a tela de cadastro */}
+        <button 
+          onClick={() => onNavigate('signup')} 
+          className="plan-button secondary-button"
+        >
+          <Zap size={16} className="mr-2"/>Criar Conta Gratuita
+        </button>
+      </div>
+
+      {/* Card do Plano Premium */}
+      <div className="plan-item primary">
+        <div className="recommend-badge"><Star size={12} className="mr-1.5"/> Mais Popular</div>
+        <div className="plan-header">
+          <h3 className="plan-name">Plano Premium</h3>
+          <p className="plan-description">Desbloqueie todo o potencial da plataforma.</p>
+        </div>
+        <div className="plan-price">
+          R$29,90<span className="plan-period">/mês</span>
+        </div>
+        <ul className="plan-features">
+          <li><Check size={16} className="feature-check-icon"/><span>Gerações de conteúdo ilimitadas</span></li>
+          <li><Check size={16} className="feature-check-icon"/><span>Drive com armazenamento ilimitado</span></li>
+          <li><Check size={16} className="feature-check-icon"/><span>Acesso a todas as funcionalidades</span></li>
+        </ul>
+        {/* >>> A CORREÇÃO ESTÁ AQUI <<< */}
+        {/* O botão Premium chama a função handlePremiumClick */}
+        <button 
+          onClick={handlePremiumClick} 
+          className="plan-button primary-button"
+        >
+          <Zap size={16} className="mr-2"/>Seja Premium
+        </button>
+      </div>
     </div>
   );
 };
@@ -440,51 +476,6 @@ export function AuthScreen() {
       <section ref={featuresRef} className="mt-20 lg:mt-0">
         <FeaturesScreen onNavigate={handleNavigation} />
       </section>
-    </div>
-  );
-}
-
-// =================================================================================
-// 4. AuthHeader - CORREÇÕES
-// =================================================================================
-export function AuthHeader() {
-  const { currentUser } = useAuth();
-  
-  const handleLogout = async () => {
-    const userToDelete = currentUser;
-    try {
-      await logout();
-      toast.success('Você saiu da sua conta.');
-      if (userToDelete && userToDelete.isAnonymous) {
-        await userToDelete.delete();
-        console.log("Conta anônima excluída com sucesso.");
-      }
-    } catch (error) {
-      toast.error('Falha ao sair da conta.');
-      console.error("Erro no logout ou na exclusão do usuário anônimo:", error);
-    }
-  };
-
-  return (
-    <div className="auth-container-simple">
-      {currentUser ? (
-        <div className="user-info">
-          {currentUser.isAnonymous ? (
-            <div className="user-avatar-guest"><User size={20} /></div>
-          ) : (
-            // CORREÇÃO: currentUser.phot -> currentUser.photoURL
-            currentUser.photoURL && <img src={currentUser.photoURL} alt={currentUser.displayName || 'Avatar'} className="user-avatar" />
-          )}
-          <span className="user-name">
-            {currentUser.isAnonymous ? 'Convidado' : `Olá, ${currentUser.displayName ? currentUser.displayName.split(' ')[0] : (currentUser.email ? currentUser.email.split('@')[0] : 'Usuário')}`}
-          </span>
-          {/* CORREÇÃO: Adicionado texto "Sair" para melhor UX */}
-          <button onClick={handleLogout} className="logout-button">
-            <LogOut size={18} />
-            <span className="hidden sm:inline ml-2">Sair</span>
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }

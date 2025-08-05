@@ -1,0 +1,143 @@
+[33mcommit 568051f9837fe56067481b50404a1b8e7c272b84[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: unknown <f.juansantiago@gmail.com>
+Date:   Tue Aug 5 01:58:12 2025 -0300
+
+    Integração com Stripe (necessário limpar código)
+
+[33mcommit b8786ecf016f02a14b85a92d8f44aa1626980443[m
+Author: unknown <f.juansantiago@gmail.com>
+Date:   Tue Aug 5 01:54:09 2025 -0300
+
+    Função premium com Stripe (necessário limpar código)
+
+[33mcommit e9d4171491242b9fd059fae987950fcf0b8fb9d0[m
+Author: unknown <f.juansantiago@gmail.com>
+Date:   Tue Aug 5 01:49:11 2025 -0300
+
+    Integração com Stripe
+
+[33mcommit 49f5b6fe01571046c6fc66dce8f22e544bdf514a[m
+Author: unknown <f.juansantiago@gmail.com>
+Date:   Tue Aug 5 01:41:24 2025 -0300
+
+    Integração com Stripe (revisar estrutura do código)
+
+[33mcommit 6a3cd5c89cb253b703e41fb86a789b983f1fa018[m
+Author: unknown <f.juansantiago@gmail.com>
+Date:   Tue Aug 5 01:40:51 2025 -0300
+
+    Integração com Stripe (Revisar Estrutura do Código)
+
+[33mcommit b7bfe9f714713f6aed2b43405fcfef24d7e5b20f[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: unknown <f.juansantiago@gmail.com>
+Date:   Mon Aug 4 08:49:47 2025 -0300
+
+    Função de cópia de arquivos gerados
+
+[33mcommit f1851646b3f17213287a4e211c4aae188e3eac85[m
+Author: unknown <f.juansantiago@gmail.com>
+Date:   Sat Aug 2 20:03:15 2025 -0300
+
+    Atualiza a mensagem de login para 'Acesse sua conta ou registre-se'
+
+[33mcommit 337c0c9c14942405b407f16e5e0578c58579c409[m
+Author: unknown <f.juansantiago@gmail.com>
+Date:   Fri Aug 1 23:57:40 2025 -0300
+
+    Otimização da UI de Autenticação para dispositivos móveis
+
+[33mcommit 66984e82b07e8f4c454ff6abd2f5d4563261d18c[m
+Author: unknown <f.juansantiago@gmail.com>
+Date:   Fri Aug 1 21:39:22 2025 -0300
+
+    Versão Atualizada: Identificação dos Arquivos Gerados por Ícones
+
+[33mcommit 82369f4c8584c076d416f7207cc4336f82f36c17[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Fri Aug 1 16:39:10 2025 -0300
+
+    Implementação da Visualização das Pastas em Listas
+
+[33mcommit 6f791bf4c23be710e65d1faf1dc35e8783025e56[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Fri Aug 1 15:13:10 2025 -0300
+
+    Dashboard Revitalizado
+
+[33mcommit f8736e8691a359e4f27df34b3cc0a15e27cfc6b8[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Fri Aug 1 13:57:43 2025 -0300
+
+    Nova UI da tela de autenticação com funcionalidades revisadas
+
+[33mcommit f68d84c54401c9931eb5d825f3f0b9f60df42853[m
+Author: unknown <f.juansantiago@gmail.com>
+Date:   Thu Jul 31 23:55:31 2025 -0300
+
+    UI da autenticação revitalizada - revisar funcionalidades
+
+[33mcommit ebfc769e1faeca95df82176f634ac789b69578bd[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Thu Jul 31 12:07:44 2025 -0300
+
+    Tela de Funcionalidades na Autenticação 2.0
+
+[33mcommit 48ad2c61f8bf3ac4c66b471db3c4d518d9fda5d7[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Thu Jul 31 11:40:02 2025 -0300
+
+    Tela de Funcionalidades na Autenticação
+
+[33mcommit f81ac4eebc949bbd6cbe8928f8a9b3155bdde5dd[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Thu Jul 31 00:25:41 2025 -0300
+
+    Versão Atualizada com grandes avanços: melhorias na UI e UX e Dashboard com pastas
+
+[33mcommit 66a2fea284fbc1627623459d2f2ae78c653166cb[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Mon Jul 28 18:48:35 2025 -0300
+
+    Autenticação do Usuário
+
+[33mcommit dd09e6ce859aff2981231608c3e7032cdf27ec0a[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Mon Jul 28 16:52:27 2025 -0300
+
+    Botão de Copiar em todas as funcionalidades
+
+[33mcommit 15413abed4cf941122f3da06b458e0dbb2bbb88e[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Mon Jul 28 16:18:50 2025 -0300
+
+    Diferencia ambientes local e de produção de forma otimizada
+
+[33mcommit 1f37711930b0aaf530f36ee7c40ab7214207d0cc[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Mon Jul 28 15:34:01 2025 -0300
+
+    Otimização da geração dos diferentes tipos de questões
+
+[33mcommit 9de8ef5eea7bb417f29ae355445465f606d19973[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Mon Jul 28 14:14:20 2025 -0300
+
+    Atualiza a logo do aplicativa
+
+[33mcommit d2b8580ce4a00c3fd28094a0bf12cd0a1fdfadcd[m
+Author: Juan Santiago <f.juansantiago@gmail.com>
+Date:   Sun Jul 27 18:54:34 2025 -0300
+
+    Atualiza o nome do aplicativo na WEB
+
+[33mcommit 1f487834fce6c44fe9b389c73a05734e7437db11[m
+Author: santiagos42 <f.juansantiago@gmail.com>
+Date:   Sun Jul 27 16:15:16 2025 -0300
+
+    README.md
+
+[33mcommit 0af003723f4b12187c3077cdf87b1b87e887840b[m
+Author: santiagos42 <f.juansantiago@gmail.com>
+Date:   Sun Jul 27 16:12:28 2025 -0300
+
+    Initial commit

@@ -5,14 +5,15 @@ import {
     BookOpen, FileText, Search, Cpu, Download, CheckCircle, Loader, FilePlus, ChevronLeft, Lightbulb, 
     ClipboardList, CalendarDays, X, FileQuestion, GraduationCap, PenSquare, Palette,
     Copy, Folder, FolderPlus, MoreVertical, Edit, Trash2 as TrashIcon, Save, FolderClock, FolderOpen,
-    LayoutGrid, CopyPlus, List, Home, Move, ArrowRight, Mail,
+    LayoutGrid, CopyPlus, List, Home, Move, ArrowRight, Mail, HardDrive, Rocket, Star
 
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
 // Imports de Autenticação
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { AuthScreen, AuthHeader } from './Auth'; 
+import { AuthScreen } from './Auth'; 
+import AuthHeader from './components/layout/AuthHeader';
 
 // Imports do Firebase
 import { 
@@ -26,9 +27,68 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Tabl
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 
+import { loadStripe } from '@stripe/stripe-js';
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+
 // =================================================================================
 // SEÇÃO DE COMPONENTES DE UI E CONTEÚDO
 // =================================================================================
+const PremiumModal = ({ isOpen, onClose, onUpgradeClick }) => {
+  if (!isOpen) return null;
+
+  const features = [
+    "Gerações de conteúdo com IA ilimitadas",
+    "Drive com armazenamento ilimitado para seus arquivos",
+    "Acesso a todas as ferramentas atuais e futuras",
+    "Exportação para PDF e DOCX sem restrições",
+    "Suporte prioritário"
+  ];
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in"
+      onClick={onClose} // Fecha o modal se clicar fora
+    >
+      <div 
+        className="bg-slate-800 text-white rounded-2xl p-8 shadow-2xl relative w-full max-w-lg border-2 border-yellow-400 animate-fade-in-up"
+        onClick={(e) => e.stopPropagation()} // Impede que o clique dentro do modal o feche
+      >
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+        >
+          <X size={24} />
+        </button>
+        
+        <div className="text-center">
+          <div className="inline-block p-3 bg-yellow-400/20 rounded-full mb-4">
+            <Star size={32} className="text-yellow-400" fill="currentColor" />
+          </div>
+          <h2 className="text-3xl font-bold mb-2">Desbloqueie o Poder Total do EducAI!</h2>
+          <p className="text-slate-300 mb-6">Eleve seu planejamento de aulas e produtividade ao próximo nível com o plano Premium.</p>
+        </div>
+
+        <ul className="space-y-3 mb-8">
+          {features.map((feature, index) => (
+            <li key={index} className="flex items-start gap-3">
+              <CheckCircle size={20} className="text-green-400 flex-shrink-0 mt-0.5" />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+
+        <button 
+          onClick={onUpgradeClick} 
+          className="w-full bg-yellow-400 text-slate-900 font-bold py-3 px-6 rounded-lg text-lg hover:bg-yellow-300 transition-all transform hover:scale-105"
+        >
+          <Rocket size={20} className="inline-block mr-2" />
+          Tornar-se Premium Agora (R$ 29,90/mês)
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const toolIconMap = {
   summary: <BookOpen size={48} className="text-green-500" />,
   activity: <PenSquare size={48} className="text-sky-500" />,
@@ -284,7 +344,8 @@ const DropdownMenu = ({ itemType, onRename, onDelete, onMove, onDuplicate }) => 
   );
 };
 
-const HistorySidebar = ({ setView }) => {
+const HistorySidebar = ({ setView, onOpenPremiumModal }) => {
+  const { currentUser, userProfile } = useAuth(); // Precisamos do perfil
   const logoUrl = process.env.PUBLIC_URL + '/logo900.png';
   const tools = [
     { id: 'activityGenerator', name: 'Gerar Atividades Avaliativas', icon: <PenSquare /> },
@@ -294,6 +355,22 @@ const HistorySidebar = ({ setView }) => {
     { id: 'caseStudyGenerator', name: 'Criar Estudos de Caso', icon: <FileQuestion /> },
     { id: 'presentationGenerator', name: 'Gerar Roteiro de Slides', icon: <Palette /> },
   ];
+    // >>> NOVA FUNÇÃO DE HANDLE (idêntica à anterior) <<<
+  const handleToolClick = (toolId) => {
+    if (currentUser?.isAnonymous) {
+      if (toolId === 'summaryGenerator') {
+        setView(toolId);
+      } else {
+        toast.error(
+          "Crie uma conta gratuita para ter acesso limitado /nOu torne-se Premium para uma experiência completa!", 
+          { duration: 5000, icon: '🔒', style: { background: '#f59e0b', color: 'white', fontWeight: 'bold'} }
+        );
+      }
+    } else {
+      setView(toolId);
+    }
+  };
+
   return (
     <aside className="w-72 bg-slate-50 p-4 border-r border-slate-200 hidden md:flex flex-col">
       {/* >>> MUDANÇA AQUI: Adiciona a logo e o slogan <<< */}
@@ -301,7 +378,18 @@ const HistorySidebar = ({ setView }) => {
         <img src={logoUrl} alt="EducAI Logo" className="w-25 h-25 mx-auto mb-2" />
         <h2 className="text-1xl font-bold text-center text-slate-600" style={{ fontFamily: "'Patrick Hand', cursive" }}>A nossa missão é otimizar o seu trabalho.</h2>
       </div>
-
+      
+      {userProfile?.plan !== 'premium' && (
+        <div className="px-3 mb-6">
+          <button 
+            onClick={onOpenPremiumModal}
+            className="w-full bg-yellow-400 text-slate-900 font-bold py-2.5 px-4 rounded-lg text-sm hover:bg-yellow-300 transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+          >
+            <Star size={16} /> Seja Premium
+          </button>
+        </div>
+      )}
+      
       <div className="mb-6">
         <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Navegação</h3>
         <ul>
@@ -319,7 +407,10 @@ const HistorySidebar = ({ setView }) => {
         <ul>
           {tools.map(tool => (
             <li key={tool.id}>
-              <button onClick={() => setView(tool.id)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors">
+              <button 
+                onClick={() => handleToolClick(tool.id)} 
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
+              >
                 {React.cloneElement(tool.icon, { size: 20 })}
                 {tool.name}
               </button>
@@ -449,28 +540,108 @@ const FeatureNoteCard = ({ icon, title, description, onClick, isHighlighted, col
 };
 
 const DrivePreview = ({ setView }) => {
-    const { currentUser } = useAuth(); const [recentFolders, setRecentFolders] = useState([]); const [isLoading, setIsLoading] = useState(true);
-    useEffect(() => { if (!currentUser) return; const unsub = getFolders(currentUser.uid, 'root', (folders) => { setRecentFolders(folders.slice(0, 6)); setIsLoading(false); }); return () => unsub(); }, [currentUser]);
-    const handleCreateFolder = async () => { const folderName = prompt("Digite o nome da nova pasta:"); if (folderName && folderName.trim() && currentUser) { try { await createFolder(currentUser.uid, 'root', folderName.trim()); toast.success(`Pasta "${folderName}" criada.`); } catch (error) { toast.error("Não foi possível criar a pasta."); } } };
-    return (
-        <div className="bg-slate-100/50 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 h-full flex flex-col">
-            <div className="flex justify-between items-center mb-4"><h2 className="text-2xl font-bold text-slate-700 flex items-center gap-2"><FolderClock size={24} />Meu Drive</h2><button onClick={() => setView('history')} className="text-sm font-semibold text-sky-600 hover:text-sky-800 flex items-center gap-1">Ver tudo <ArrowRight size={16} /></button></div>
-            <p className="text-slate-600 text-sm mb-6">Acesse e organize seus materiais ou crie uma nova pasta para começar.</p>
-            <div className="flex-grow grid grid-cols-3 gap-4">
-                {isLoading ? (<div className="col-span-3 flex items-center justify-center"><Loader className="animate-spin text-sky-500" /></div>) : recentFolders.length > 0 ? (recentFolders.map(folder => (<div key={folder.id} onClick={() => setView('history')} className="bg-white/70 p-4 rounded-lg flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white hover:shadow-md transition-all"><Folder size={32} className="text-yellow-500 mb-2" /><p className="text-xs font-semibold text-slate-600 truncate w-full">{folder.name}</p></div>))) : (<div className="col-span-3 flex flex-col items-center justify-center text-slate-500 bg-slate-100/50 rounded-lg"><Folder size={40} className="mb-2" /><p className="font-semibold">Nenhuma pasta ainda</p><p className="text-xs">Clique abaixo para criar sua primeira pasta.</p></div>)}
-            </div>
-            <div className="mt-6"><button onClick={handleCreateFolder} className="form-button-secondary w-full"><FolderPlus size={16} className="mr-2"/> Criar Nova Pasta</button></div>
+    const { currentUser } = useAuth(); 
+    const [recentFolders, setRecentFolders] = useState([]); 
+    const [isLoading, setIsLoading] = useState(true); useEffect(() => { if (!currentUser) return; 
+    const unsub = getFolders(currentUser.uid, 'root', (folders) => { setRecentFolders(folders.slice(0, 6)); setIsLoading(false); }); return () => unsub(); }, [currentUser]);
+    
+    const handleViewAllClick = () => {
+    if (currentUser?.isAnonymous) {
+      toast.error(
+        "Crie uma conta gratuita para ter acesso limitado. \n\nTorne-se Premium para uma experiência completa!", 
+        { duration: 5000, icon: '🔒', style: { background: '#f59e0b', color: 'white', fontWeight: 'bold'} }
+      );
+    } else {
+      setView('history');
+    }
+  };
+
+    const handleCreateFolder = async () => {
+      if (currentUser?.isAnonymous) {
+      toast.error(
+          "Crie uma conta gratuita para ter acesso limitado. \n\nTorne-se Premium para uma experiência completa!", 
+          { duration: 5000, icon: '🔒', style: { background: '#f59e0b', color: 'white', fontWeight: 'bold'} }
+        );
+    } else {
+      setView('history');
+    }
+      const folderName = prompt("Digite o nome da nova pasta:");
+      if (folderName && folderName.trim() && currentUser) {
+        try {
+          await createFolder(currentUser.uid, 'root', folderName.trim());
+          toast.success(`Pasta "${folderName}" criada.`);
+        } catch (error) {
+          toast.error("Não foi possível criar a pasta.");
+        }
+      }
+    };
+    
+    return ( // return da DrivePreview
+      <div className="bg-slate-100/50 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 h-full flex flex-col">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-slate-700 flex items-center gap-2">
+            <FolderClock size={24} />
+            Meu Drive
+          </h2>
+            <button onClick={handleViewAllClick}
+            className="text-sm font-semibold text-sky-600 hover:text-sky-800 flex items-center gap-1">
+            Ver tudo <ArrowRight size={16} />
+          </button>
         </div>
+
+        <p className="text-slate-600 text-sm mb-6">
+          Acesse e organize seus materiais ou crie uma nova pasta para começar.
+        </p>
+        <div className="flex-grow grid grid-cols-3 gap-4">
+          {isLoading ? (
+            <div className="col-span-3 flex items-center justify-center">
+              <Loader className="animate-spin text-sky-500" />
+            </div>
+          ) : recentFolders.length > 0 ? (
+            recentFolders.map(folder => (
+              <div
+                key={folder.id}
+                onClick={() => setView('history')}
+                className="bg-white/70 p-4 rounded-lg flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white hover:shadow-md transition-all"
+              >
+                <Folder size={32} className="text-yellow-500 mb-2" />
+                <p className="text-xs font-semibold text-slate-600 truncate w-full">{folder.name}</p>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-3 flex flex-col items-center justify-center text-slate-500 bg-slate-100/50 rounded-lg">
+              <Folder size={40} className="mb-2" />
+              <p className="font-semibold">Nenhuma pasta ainda</p>
+              <p className="text-xs">Clique abaixo para criar sua primeira pasta.</p>
+            </div>
+          )}
+        </div>
+        <div className="mt-6">
+          <button onClick={handleCreateFolder} className="form-button-secondary w-full">
+            <FolderPlus size={16} className="mr-2" />
+            Criar Nova Pasta
+          </button>
+        </div>
+      </div>
     );
 };
 
-const ModernAuthBackground = () => (
-    <div className="absolute inset-0 w-full h-full -z-10"><div className="auth-shape auth-shape-1"></div><div className="auth-shape auth-shape-2"></div></div>
-);
+const HistoryScreen = ({ 
+  setView, 
+  loadGeneration,
+  currentFolderId,
+  setCurrentFolderId,
+  breadcrumbs,
+  setBreadcrumbs,
+  onOpenPremiumModal
+}) => {
 
-
-const HistoryScreen = ({ setView, loadGeneration }) => {
-  const { currentUser } = useAuth(); const [folders, setFolders] = useState([]); const [generations, setGenerations] = useState([]); const [currentFolderId, setCurrentFolderId] = useState('root'); const [breadcrumbs, setBreadcrumbs] = useState([{ id: 'root', name: 'Meu Drive' }]); const [isLoading, setIsLoading] = useState(true); const [viewType, setViewType] = useState('grid'); const [itemToMove, setItemToMove] = useState(null);
+const { currentUser } = useAuth(); 
+const [folders, setFolders] = useState([]); 
+const [generations, setGenerations] = useState([]); 
+const [isLoading, setIsLoading] = useState(true); 
+const [viewType, setViewType] = useState('grid'); 
+const [itemToMove, setItemToMove] = useState(null);
   useEffect(() => {
     if (!currentUser) return;
     setIsLoading(true);
@@ -550,27 +721,31 @@ const HistoryScreen = ({ setView, loadGeneration }) => {
   return (
     <div className="w-full min-h-screen bg-white flex">
       {itemToMove && <MoveItemModal item={itemToMove} onClose={() => setItemToMove(null)} onConfirmMove={handleConfirmMove} />}
-      <HistorySidebar setView={setView} />
+      <HistorySidebar setView={setView} onOpenPremiumModal={onOpenPremiumModal} />
       <div className="flex-1 flex flex-col h-screen">
         
-        {/* >>> MUDANÇA 2: O cabeçalho agora é dinâmico <<< */}
-        <header className="flex-shrink-0 p-6 border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-          <div className="relative flex justify-center items-center">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-slate-800 flex items-center justify-center gap-3">
-                {/* Ícone muda se for a raiz ou uma pasta */}
-                {currentFolder.id === 'root' 
-                  ? <Folder size={24} className="text-slate-700" />
-                  : <FolderOpen size={24} className="text-sky-600" />
-                }
-                <span>{currentFolder.name}</span>
-              </h1>
-            </div>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2">
-              <AuthHeader />
-            </div>
+      <header className="flex-shrink-0 p-4 border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        {/* O container principal agora é 'relative' para posicionar o AuthHeader */}
+        <div className="relative flex justify-center items-center">
+          
+          {/* O título volta a ficar no centro */}
+          <div className="text-center">
+            <h1 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
+              {currentFolder.id === 'root' 
+                ? <HardDrive size={22} className="text-slate-600" />
+                : <FolderOpen size={22} className="text-sky-600" />
+              }
+              <span>{currentFolder.name}</span>
+            </h1>
           </div>
-        </header>
+
+          {/* O AuthHeader volta a ser posicionado de forma absoluta no canto direito */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+            <AuthHeader onOpenPremiumModal={onOpenPremiumModal} />
+          </div>
+          
+        </div>
+      </header>
 
         <main className="flex-1 p-6 bg-slate-100 overflow-y-auto">
           {/* >>> MUDANÇA 3: A barra de breadcrumbs foi aprimorada <<< */}
@@ -864,72 +1039,106 @@ const GeneratorScreen = ({ setView, setResult, type, initialTopic, initialGrade,
         <button onClick={handleGenerate} disabled={isLoading} className="form-button-primary mt-8">
           {isLoading ? <><Loader className="animate-spin mr-2" size={20} /> Gerando...</> : <><Cpu className="mr-2" size={20} /> {button}</>}
         </button>
-        <button onClick={onClose ? onClose : () => setView('home')} className="form-button-secondary mt-3">
+        <button onClick={onClose ? onClose : goBack} className="form-button-secondary mt-3">
           {onClose ? <X size={18} className="mr-1"/> : <ChevronLeft size={18} className="mr-1"/>}
-          {onClose ? 'Ver Meu Arquivo' : 'Voltar ao Início'}
+          {onClose ? 'Cancelar' : 'Voltar'}
         </button>
-            <button onClick={goBack ? goBack : () => setView('history')} className="form-button-secondary mt-3">
-            <ChevronLeft size={18} className="mr-1"/>
-            Voltar
-            </button>
-          </div>
-        </div>
-      );
+      </div>
+    </div>
+  );
 };
 
-const WhiteboardHomeScreen = ({ setView }) => {
-  const { currentUser } = useAuth();
-  
-  // Define o caminho da logo. Confirme se o nome do arquivo está correto.
+// Em App.js
+
+const WhiteboardHomeScreen = ({ setView, onOpenPremiumModal }) => {
+  const { currentUser } = useAuth(); // Só precisamos do currentUser aqui por enquanto
   const logoUrl = process.env.PUBLIC_URL + '/logohome.png';
 
-  const features = [{ id: 'activityGenerator', icon: <PenSquare />, title: "Gerar Atividades Avaliativas", description: "Crie avaliações, exercícios, simulados e mais." }, { id: 'planningAssistant', icon: <CalendarDays />, title: "Assistente de Planejamento", description: "Organize sua semana, seu bimestre, seu ano letivo.", isHighlighted: true }, { id: 'lessonPlanGenerator', icon: <ClipboardList />, title: "Criar Planos de Aula", description: "Elabore planos de aula completos e alinhados à BNCC." }, { id: 'summaryGenerator', icon: <BookOpen />, title: "Gerar Resumos Didáticos", description: "Elabore resumos didáticos de qualidade sobre diversos temas." }, { id: 'caseStudyGenerator', icon: <FileQuestion />, title: "Criar Estudos de Caso", description: "Gere cenários práticos que abordam de forma brilhante qualquer assunto.", isHighlighted: true }, { id: 'presentationGenerator', icon: <Palette />, title: "Gerar Roteiro de Slides", description: "Crie roteiros para apresentações." }];
-  const noteColors = useMemo(() => { return [{ bg: 'bg-yellow-200/80', border: 'border-yellow-400' }, { bg: 'bg-sky-200/80', border: 'border-sky-400' }, { bg: 'bg-green-200/80', border: 'border-green-400' }, { bg: 'bg-pink-200/80', border: 'border-pink-400' }, { bg: 'bg-purple-200/80', border: 'border-purple-400' }, { bg: 'bg-orange-200/80', border: 'border-orange-400' }].sort(() => 0.5 - Math.random()); }, []);
+  const features = [
+    { id: 'activityGenerator', icon: <PenSquare />, title: "Gerar Atividades Avaliativas", description: "Crie avaliações, exercícios, simulados e mais." },
+    { id: 'planningAssistant', icon: <CalendarDays />, title: "Assistente de Planejamento", description: "Organize sua semana, seu bimestre, seu ano letivo.", isHighlighted: true },
+    { id: 'lessonPlanGenerator', icon: <ClipboardList />, title: "Criar Planos de Aula", description: "Elabore planos de aula completos e alinhados à BNCC." },
+    { id: 'summaryGenerator', icon: <BookOpen />, title: "Gerar Resumos Didáticos", description: "Elabore resumos didáticos de qualidade sobre diversos temas." },
+    { id: 'caseStudyGenerator', icon: <FileQuestion />, title: "Criar Estudos de Caso", description: "Gere cenários práticos que abordam de forma brilhante qualquer assunto.", isHighlighted: true },
+    { id: 'presentationGenerator', icon: <Palette />, title: "Gerar Roteiro de Slides", description: "Crie roteiros para apresentações." }
+  ];
+
+  const noteColors = useMemo(() => {
+    return [
+      { bg: 'bg-yellow-200/80', border: 'border-yellow-400' },
+      { bg: 'bg-sky-200/80', border: 'border-sky-400' },
+      { bg: 'bg-green-200/80', border: 'border-green-400' },
+      { bg: 'bg-pink-200/80', border: 'border-pink-400' },
+      { bg: 'bg-purple-200/80', border: 'border-purple-400' },
+      { bg: 'bg-orange-200/80', border: 'border-orange-400' }
+    ].sort(() => 0.5 - Math.random());
+  }, []);
+
+  const handleFeatureClick = (featureId) => {
+    if (currentUser?.isAnonymous) {
+      if (featureId === 'summaryGenerator') {
+        setView(featureId);
+      } else {
+        toast.error(
+          "Crie uma conta para ter acesso limitado ou torne-se Premium!",
+          { duration: 5000, icon: '🔒', style: { background: '#f59e0b', color: 'white', fontWeight: 'bold'} }
+        );
+      }
+    } else {
+      setView(featureId);
+    }
+  };
 
   return (
     <div className="whiteboard-bg w-full min-h-screen flex flex-col items-center justify-center p-4 lg:p-8 relative">
-      <div className="absolute top-0 right-0 p-6 z-20"><AuthHeader /></div>
-      <AnimatedBackground />
-      <div className="relative z-10 flex flex-col items-center w-full max-w-7xl mx-auto">
-        
-        {/* >>> MUDANÇA PRINCIPAL AQUI <<< */}
-        <div className="text-center mb-10 md:mb-12">
-          {/* 1. Inserimos a imagem da logo */}
-          <img
-            src={logoUrl}
-            alt="EducAI Logo"
-            className="mx-auto w-48 h-48 md:w-60 md:h-60 drop-shadow-lg"
-          />
+      {/* Passamos a prop para o AuthHeader */}
+      <header className="absolute top-0 right-0 p-4 z-20">
+        <AuthHeader onOpenPremiumModal={onOpenPremiumModal} />
+      </header>
 
-          {/* 2. Transformamos o subtítulo em uma saudação principal */}
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mt-4" style={{ fontFamily: "'Patrick Hand', cursive" }}>
-            {currentUser && !currentUser.isAnonymous && currentUser.displayName
-              ? `Olá, ${currentUser.displayName.split(' ')[0]}!`
-              : 'Seu Assistente Pessoal de IA'
-            }
-          </h1>
+        <AnimatedBackground />
+        <div className="relative z-10 flex flex-col items-center w-full max-w-7xl mx-auto">
+          
+          <div className="text-center mb-10 md:mb-12">
+            <img
+              src={logoUrl}
+              alt="EducAI Logo"
+              className="mx-auto w-48 h-48 md:w-60 md:h-60 drop-shadow-lg"
+            />
 
-          {/* 3. Mantemos o slogan */}
-          <p className="text-lg md:text-xl text-slate-500 mt-2 font-sans">
-            Aproveite as funcionalidades da nossa plataforma para criar, organizar e compartilhar conteúdos educacionais de forma rápida e eficiente.
-          </p>
-        </div>
-        
-        {/* O resto do layout permanece o mesmo */}
-        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <div className="animate-fade-in-up">
-            <DrivePreview setView={setView} />
+            <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mt-4" style={{ fontFamily: "'Patrick Hand', cursive" }}>
+              {currentUser && !currentUser.isAnonymous && currentUser.displayName
+                ? `Olá, ${currentUser.displayName.split(' ')[0]}!`
+                : 'Seu Assistente Pessoal de IA'
+              }
+            </h1>
+          
+            <p className="text-lg md:text-xl text-slate-500 mt-2 font-sans">
+              Aproveite as funcionalidades da nossa plataforma para criar, organizar e compartilhar conteúdos educacionais de forma rápida e eficiente.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {features.map((feature, index) => (
-              <div key={feature.id} className="animate-fade-in-up" style={{ animationDelay: `${150 * (index + 1)}ms` }}>
-                <FeatureNoteCard onClick={() => setView(feature.id)} icon={feature.icon} title={feature.title} description={feature.description} isHighlighted={feature.isHighlighted} color={noteColors[index % noteColors.length]}/>
-              </div>
-            ))}
+        
+          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="animate-fade-in-up">
+              <DrivePreview setView={setView} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {features.map((feature, index) => (
+                <div key={feature.id} className="animate-fade-in-up" style={{ animationDelay: `${150 * (index + 1)}ms` }}>
+                  <FeatureNoteCard 
+                    onClick={() => handleFeatureClick(feature.id)} 
+                    icon={feature.icon} 
+                    title={feature.title} 
+                    description={feature.description} 
+                    isHighlighted={feature.isHighlighted} 
+                    color={noteColors[index % noteColors.length]}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
@@ -974,7 +1183,7 @@ const SaveToHistoryModal = ({ result, onClose, onSave }) => {
   );
 };
 
-const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) => {
+const ResultScreen = ({ setView, setResult, result, goBack, onOpenPremiumModal }) => {
   const [editableResult, setEditableResult] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [pdfError, setPdfError] = useState('');
@@ -1637,7 +1846,9 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
         </div>
       )}
       <div className="w-full min-h-screen bg-slate-100 text-slate-800 flex flex-col items-center p-4 md:p-8">
-        <AuthHeader setView={setView} />
+        <header className="w-full max-w-6xl mx-auto flex justify-end items-center py-4 px-4 md:px-0">
+          <AuthHeader onOpenPremiumModal={onOpenPremiumModal} />
+        </header>
         <div className="w-full max-w-6xl mx-auto">
           <div className="text-center mb-8 animate-fade-in">
             <CheckCircle className="mx-auto text-green-500 mb-3" size={48} />
@@ -1652,24 +1863,18 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
                   <button onClick={() => setShowSaveModal(true)} className="form-button-primary w-full">
                     <Save size={18} className="mr-2" /> Salvar no Histórico
                   </button>
-                {/* >>> MUDANÇA: Adiciona o botão de Voltar <<< */} 
-                {goBack && ( 
-                  <button onClick={goBack} className="form-button-secondary w-full">
-                    <ChevronLeft size={18} className="mr-1" /> Voltar
-                  </button>
-                )}
 
-                  {previousResult && (
                     <button onClick={goBack} className="form-button-secondary w-full">
-                      <ChevronLeft size={18} className="mr-1" /> Voltar ao Planejamento
+                      <ChevronLeft size={18} className="mr-1" /> Voltar
                     </button>
-                  )}
-                  <button onClick={handleDownloadPdf} disabled={isDownloading} className="form-button-secondary w-full">
-                    {isDownloading ? <><Loader className="animate-spin mr-2" size={20} /> Gerando...</> : <><Download className="mr-2" size={20} /> Download PDF</>}
-                  </button>
-                  <button onClick={() => handleDownloadDocx()} disabled={isDownloading} className="form-button-secondary w-full">
-                    {isDownloading ? <><Loader className="animate-spin mr-2" size={20} /> Gerando...</> : <><FileText className="mr-2" size={20} /> Download DOCX</>}
-                  </button>
+
+                    <button onClick={handleDownloadPdf} disabled={isDownloading} className="form-button-secondary w-full">
+                      {isDownloading ? <><Loader className="animate-spin mr-2" size={20} /> Gerando...</> : <><Download className="mr-2" size={20} /> Download PDF</>}
+                    </button>
+                    <button onClick={() => handleDownloadDocx()} disabled={isDownloading} className="form-button-secondary w-full">
+                      {isDownloading ? <><Loader className="animate-spin mr-2" size={20} /> Gerando...</> : <><FileText className="mr-2" size={20} /> Download DOCX</>}
+                    </button>
+
                   {editableResult.type === 'activity' && (
                     <>
                       <button onClick={handleDownloadAnswerKeyPdf} disabled={isDownloading} className="form-button-secondary w-full">
@@ -1690,16 +1895,15 @@ const ResultScreen = ({ setView, setResult, result, previousResult, goBack }) =>
                       </button>
                     </>
                   )}
-                  {!previousResult && (
                     <>
                       <button onClick={() => setView(homeView)} className="form-button-secondary w-full">
                         <FilePlus className="mr-2" size={20} /> Criar Novo
                       </button>
                       <button onClick={() => setView('history')} className="form-button-tertiary w-full">
-                        <ChevronLeft size={18} className="mr-1" /> Voltar ao Meu Drive
+                        <HardDrive size={18} className="mr-2" /> Voltar ao Meu Drive
                       </button>
                     </>
-                  )}
+                  
                 </div>
                 {pdfError && <p className="text-sm text-red-500 mt-3">{pdfError}</p>}
               </div>
@@ -1796,29 +2000,70 @@ const VerifyEmailScreen = () => {
 function AppContent() {
   const { currentUser } = useAuth();
   
-  // >>> MUDANÇA: 'view' agora é um histórico <<<
+  // >>> MUDANÇA 1: O estado agora é um array (pilha de histórico) <<<
   const [history, setHistory] = useState(['home']);
   const [result, setResult] = useState(null);
-  
-  // A view atual é sempre o último item do histórico
+  const [currentFolderId, setCurrentFolderId] = useState('root');
+  const [breadcrumbs, setBreadcrumbs] = useState([{ id: 'root', name: 'Meu Drive' }]);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  // A view atual é sempre o último item do histórico.
   const currentView = history[history.length - 1];
 
+  const handleUpgradeClick = async () => {
+    // Fecha o modal antes de redirecionar
+    setIsPremiumModalOpen(false); 
+    const toastId = toast.loading("Redirecionando para o pagamento...");
+
+    if (!currentUser || currentUser.isAnonymous) {
+      toast.error("Você precisa criar uma conta para se tornar Premium.", { id: toastId });
+      // Leva o usuário para a tela de cadastro se ele for convidado ou não estiver logado
+      navigateTo('signup');
+      return;
+    }
+    
+    try {
+      // Substitua pela URL real da sua Cloud Function
+      const functionUrl = "https://us-central1-appeducai.cloudfunctions.net/createCheckoutSession";
+
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.uid }),
+      });
+
+      const session = await response.json();
+
+      if (!response.ok) {
+        throw new Error(session.error || "Ocorreu um erro no servidor.");
+      }
+      
+      const stripe = await stripePromise;
+      await stripe.redirectToCheckout({ sessionId: session.id });
+      toast.dismiss(toastId);
+
+    } catch (error) {
+      toast.error(`Falha ao iniciar o pagamento: ${error.message}`, { id: toastId });
+    }
+  };
+
   useEffect(() => {
-    // Se o usuário deslogar, reseta o histórico para a home
+    // Se o usuário deslogar, reseta o histórico para a tela inicial.
     if (!currentUser) {
       setHistory(['home']);
       setResult(null);
     }
   }, [currentUser]);
 
-  // Função para navegar para uma nova tela
+  // >>> MUDANÇA 2: Novas funções de navegação <<<
+
+  // Função para navegar para uma NOVA tela (adiciona ao histórico)
   const navigateTo = (view) => {
     setHistory(prev => [...prev, view]);
   };
   
-  // Função para voltar para a tela anterior
+  // Função para VOLTAR para a tela anterior (remove do histórico)
   const navigateBack = () => {
-    // Não permite voltar além da tela inicial
+    // Impede que o usuário volte além da tela inicial
     if (history.length > 1) {
       setHistory(prev => prev.slice(0, -1));
     }
@@ -1830,30 +2075,94 @@ function AppContent() {
     navigateTo('result');
   };
   
-  // Função para carregar um arquivo do histórico
+  // Função para carregar um arquivo do histórico do Drive
   const loadGenerationFromHistory = (content) => {
     setResult(content);
     navigateTo('result');
   };
   
-  // A lógica de roteamento agora usa 'currentView'
-  switch (currentView) {
-    case 'history': 
-      return <HistoryScreen setView={navigateTo} loadGeneration={loadGenerationFromHistory} />;
-    case 'result': 
-      if (!result) return <HistoryScreen setView={navigateTo} loadGeneration={loadGenerationFromHistory} />;
-      // Passamos a função de voltar para o ResultScreen
-      return <ResultScreen setView={navigateTo} setResult={handleSetResult} result={result} goBack={navigateBack} />;
-    case 'home': 
-      return <WhiteboardHomeScreen setView={navigateTo} />;
-    default: 
-      // Passamos a função de voltar para o GeneratorScreen
-      return <GeneratorScreen setView={navigateTo} setResult={handleSetResult} type={currentView} goBack={navigateBack} />;
-  }
-}
+  // >>> MUDANÇA 3: O switch agora usa 'currentView' e passa as novas funções <<<
+    return (
+        <>
+        {/* O Modal Premium agora vive aqui, no nível mais alto, pronto para ser chamado */}
+        <PremiumModal 
+            isOpen={isPremiumModalOpen}
+            onClose={() => setIsPremiumModalOpen(false)}
+            onUpgradeClick={handleUpgradeClick}
+        />
+
+        {/* 
+            A estrutura abaixo executa o seu switch-case original, 
+            apenas adicionando a nova prop 'onOpenPremiumModal'.
+            NENHUMA FUNCIONALIDADE EXISTENTE FOI REMOVIDA.
+        */}
+        {(() => {
+            switch (currentView) {
+            case 'history': 
+                return (
+                <HistoryScreen 
+                    setView={navigateTo} 
+                    loadGeneration={loadGenerationFromHistory}
+                    currentFolderId={currentFolderId}
+                    setCurrentFolderId={setCurrentFolderId}
+                    breadcrumbs={breadcrumbs}
+                    setBreadcrumbs={setBreadcrumbs}
+                    // Prop nova adicionada:
+                    onOpenPremiumModal={() => setIsPremiumModalOpen(true)}
+                />
+                );
+
+            case 'result': 
+                if (!result) {
+                // Este caso é para segurança, se o usuário chegar em /result sem dados
+                return (
+                    <HistoryScreen 
+                    setView={navigateTo} 
+                    loadGeneration={loadGenerationFromHistory}
+                    currentFolderId={currentFolderId}
+                    setCurrentFolderId={setCurrentFolderId}
+                    breadcrumbs={breadcrumbs}
+                    setBreadcrumbs={setBreadcrumbs}
+                    onOpenPremiumModal={() => setIsPremiumModalOpen(true)}
+                    />
+                );
+                }
+                // A tela de resultado principal
+                return (
+                <ResultScreen 
+                    setView={navigateTo} 
+                    setResult={handleSetResult} 
+                    result={result} 
+                    goBack={navigateBack} 
+                    // Prop nova adicionada:
+                    onOpenPremiumModal={() => setIsPremiumModalOpen(true)}
+                />
+                );
+                
+            case 'home': 
+                return (
+                <WhiteboardHomeScreen 
+                    setView={navigateTo}
+                />
+                );
+                
+            default: 
+                return (
+                <GeneratorScreen 
+                    setView={navigateTo} 
+                    setResult={handleSetResult} 
+                    type={currentView} 
+                    goBack={navigateBack} 
+                />
+                );
+            }
+        })()}
+        </>
+    );
+    } // Fim da função AppContent
 
 function AppGatekeeper() {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, loading } = useAuth(); // Só precisa destes dois.
 
   if (loading) {
     return (
@@ -1864,23 +2173,16 @@ function AppGatekeeper() {
   }
   
   if (currentUser) {
-    // >>> AQUI ESTÁ A NOVA LÓGICA <<<
-    // Se o usuário está logado, mas o e-mail não foi verificado
-    // E a conta não é anônima (convidados não precisam verificar e-mail)
     if (!currentUser.emailVerified && !currentUser.isAnonymous) {
-      // Mostra a tela de verificação de e-mail.
       return (
         <div className="w-full min-h-screen flex items-center justify-center bg-slate-100">
           <VerifyEmailScreen />
         </div>
       );
     }
-    
-    // Se o e-mail foi verificado (ou é um convidado), libera o acesso ao app.
     return <AppContent />;
   }
 
-  // Se o usuário não está logado, mostra a tela de autenticação.
   return (
     <div className="auth-modern-bg">
       <AuthScreen />
@@ -1898,3 +2200,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+
