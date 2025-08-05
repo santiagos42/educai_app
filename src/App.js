@@ -2034,14 +2034,24 @@ function AppContent() {
       const session = await response.json();
 
       if (!response.ok) {
-        throw new Error(session.error || "Ocorreu um erro no servidor.");
+        // Se a resposta não foi OK, o erro está na propriedade 'error.message'
+        // que configuramos na Cloud Function para nos ajudar.
+        throw new Error(session.error.message || "Ocorreu um erro desconhecido no servidor.");
       }
       
+      // Adicionamos uma verificação de segurança extra para garantir que o 'id' existe.
+      if (!session || !session.id) {
+          console.error("ERRO: A resposta do servidor foi bem-sucedida (status 200), mas não continha um 'id' de sessão do Stripe. Resposta recebida:", session);
+          throw new Error("Resposta inválida do servidor. Não foi possível encontrar o ID da sessão.");
+      }
+
       const stripe = await stripePromise;
       await stripe.redirectToCheckout({ sessionId: session.id });
       toast.dismiss(toastId);
 
     } catch (error) {
+      // Este log agora nos dará uma pista muito mais clara no console do navegador.
+      console.error('ERRO DETALHADO CAPTURADO NO FRONTEND:', error); 
       toast.error(`Falha ao iniciar o pagamento: ${error.message}`, { id: toastId });
     }
   };
