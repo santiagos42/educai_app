@@ -28,7 +28,6 @@ import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 
 import { loadStripe } from '@stripe/stripe-js';
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 // =================================================================================
 // SEÇÃO DE COMPONENTES DE UI E CONTEÚDO
@@ -2009,52 +2008,52 @@ function AppContent() {
   // A view atual é sempre o último item do histórico.
   const currentView = history[history.length - 1];
 
-  const handleUpgradeClick = async () => {
-    // Fecha o modal antes de redirecionar
-    setIsPremiumModalOpen(false); 
-    const toastId = toast.loading("Redirecionando para o pagamento...");
+const handleUpgradeClick = async () => {
+  setIsPremiumModalOpen(false); 
+  const toastId = toast.loading("Redirecionando para o pagamento...");
 
-    if (!currentUser || currentUser.isAnonymous) {
-      toast.error("Você precisa criar uma conta para se tornar Premium.", { id: toastId });
-      // Leva o usuário para a tela de cadastro se ele for convidado ou não estiver logado
-      navigateTo('signup');
-      return;
+  if (!currentUser || !currentUser.uid) {
+    toast.error("Erro: Usuário não está logado. Por favor, atualize a página.", { id: toastId });
+    return;
+  }
+  
+  try {
+    // Chave Publicável de PRODUÇÃO diretamente aqui. É seguro.
+    const STRIPE_PUBLISHABLE_KEY = "pk_live_51RsTZO1zTGztNQWqUHfbSWC0croX1IvzdlE98L9GOLFqlUrjylei9uatfNaiX7xHXPxuNnROT7Kb4jo0Mv60wgvc006jsqwiLR";
+
+    const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
+    const stripe = await stripePromise;
+
+    if (!stripe) {
+      throw new Error("Stripe.js não carregou. Verifique a conexão com a internet.");
     }
     
-    try {
-      // Substitua pela URL real da sua Cloud Function
-      const functionUrl = "https://us-central1-appeducai.cloudfunctions.net/createCheckoutSession";
+    const functionUrl = "https://us-central1-appeducai.cloudfunctions.net/createCheckoutSession";
 
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.uid }),
-      });
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.uid }),
+    });
 
-      const session = await response.json();
+    const session = await response.json();
 
-      if (!response.ok) {
-        // Se a resposta não foi OK, o erro está na propriedade 'error.message'
-        // que configuramos na Cloud Function para nos ajudar.
-        throw new Error(session.error.message || "Ocorreu um erro desconhecido no servidor.");
-      }
-      
-      // Adicionamos uma verificação de segurança extra para garantir que o 'id' existe.
-      if (!session || !session.id) {
-          console.error("ERRO: A resposta do servidor foi bem-sucedida (status 200), mas não continha um 'id' de sessão do Stripe. Resposta recebida:", session);
-          throw new Error("Resposta inválida do servidor. Não foi possível encontrar o ID da sessão.");
-      }
-
-      const stripe = await stripePromise;
-      await stripe.redirectToCheckout({ sessionId: session.id });
-      toast.dismiss(toastId);
-
-    } catch (error) {
-      // Este log agora nos dará uma pista muito mais clara no console do navegador.
-      console.error('ERRO DETALHADO CAPTURADO NO FRONTEND:', error); 
-      toast.error(`Falha ao iniciar o pagamento: ${error.message}`, { id: toastId });
+    if (!response.ok) {
+      throw new Error(session.error?.message || "Ocorreu um erro desconhecido no servidor.");
     }
-  };
+    
+    if (!session || !session.id) {
+        throw new Error("ID da sessão inválido retornado pelo servidor.");
+    }
+
+    await stripe.redirectToCheckout({ sessionId: session.id });
+    toast.dismiss(toastId);
+
+  } catch (error) {
+    console.error('ERRO NO FLUXO DE CHECKOUT:', error); 
+    toast.error(`Falha: ${error.message}`, { id: toastId });
+  }
+};
 
   useEffect(() => {
     // Se o usuário deslogar, reseta o histórico para a tela inicial.
